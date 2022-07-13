@@ -1,0 +1,11 @@
+#'''Parameters config.'''#
+
+
+# --- general --- #
+
+some_constant:   2500
+
+
+# --- first_rule --- #
+
+other_constant:    10000

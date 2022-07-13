@@ -1,0 +1,117 @@
+'''Workflow for the CAMP binning module.'''
+
+
+from contextlib import redirect_stderr
+import os
+from os.path import basename, join
+import pandas as pd
+from utils import Workflow_Dirs, ingest_samples
+
+
+# Load and/or make the working directory structure
+dirs = Workflow_Dirs(config['work_dir'], short-read-taxonomy)
+
+
+# Load sample names and input files 
+SAMPLES = ingest_samples(config['samples'], dirs.TMP)
+
+
+# --- Workflow output --- #
+
+
+rule all:
+    input:
+        join(dirs.OUT, 'final_reports', 'samples.csv') 
+
+
+# --- Workflow steps --- #
+
+
+rule sample_rule:
+    # Corresponds to map_sort from camp_binning
+    input:
+        fwd = join(dirs.TMP, '{sample}_1.fastq'),
+        rev = join(dirs.TMP, '{sample}_2.fastq'),
+        ctg = join(dirs.TMP, '{sample}.fasta'),
+    output:
+        join(dirs.OUT, '0_contig_coverage', '{sample}', 'coverage.bam'), 
+        join(dirs.OUT, '0_contig_coverage', '{sample}', 'coverage.bam.bai'),
+    log:
+        join(dirs.LOG, 'map_sort', '{sample}.out'),
+    threads: config['map_sort_threads'],
+    resources:
+        mem = lambda wildcards, attempt: \
+              int(config['map_sort_mem_mb']) + 10000 * attempt,
+    params:
+        out_dir = join(dirs.OUT, '0_contig_coverage', '{sample}'),
+    shell:
+        """
+        CTG_PREFIX=$(basename {input.ctg} .fasta)
+        mkdir -p {params.out_dir}
+        bowtie2-build {input.ctg} {params.out_dir}/$CTG_PREFIX > {log} 2>&1
+        bowtie2 -x {params.out_dir}/$CTG_PREFIX -p {threads} \
+            -1 {input.fwd} -2 {input.rev} | \
+            samtools view -@ {threads} -uS - | \
+            samtools sort -@ {threads} - \
+            -o {params.out_dir}/coverage.bam > {log} 2>&1
+        samtools index -@ {threads} {params.out_dir}/coverage.bam > {log} 2>&1
+        """
+
+
+rule first_rule:
+    input:
+        # Symlinked input files,
+    output:
+        # Output files/directories,
+    conda:
+        # /path/to/camp_module/configs/conda/new_env.yaml,
+    log:
+        # Log in appropriate subdirectory,
+    threads: # Format: config[rule_name_threads],
+    resources:
+        mem = # Format: config[rule_name_mem], 
+    params:
+        some_constant = config['some_constant'],
+        other_constant = config['other_constant'],
+        # I usually put the output directory here,
+    shell:
+        """
+        mkdir -p {params.out_dir}
+        ./command_line.sh > {log} 2>&1
+        """
+
+
+rule python_rule:
+    input:
+        # Intermediate input files,
+    output:
+        # Output files/directories,
+    log:
+        # Log in appropriate subdirectory,
+    threads: # Format: config[rule_name_threads],
+    resources:
+        mem = # Format: config[rule_name_mem], 
+    params:
+        some_constant = config['some_constant'],
+        # I usually put the output directory here,
+    run:
+        with open(log[0], 'w') as l:
+            with redirect_stderr(l): # Can be toggled with redirect_stdout depending on the needs of the commands
+                print('Now writing to {}'.format(log))
+                some_python_function()
+
+
+rule make_config:
+    input:
+        # Intermediate input files,
+    output:
+        join(dirs.OUT, 'final_reports', 'samples.csv'),
+    run:
+        # Collate workflow outputs and i) summarize them in a new samples.csv for downstream analysis and/or ii) copy them to 'final_reports' for external data analysis
+        df = pd.DataFrame.from_dict(dct, orient ='index')
+        df.reset_index(inplace = True)
+        df.rename(columns = {'index': 'sample_name'}, inplace = True)
+        df.to_csv(str(output), index = False)
+
+
+
