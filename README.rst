@@ -15,8 +15,6 @@ Overview
 
 This module is designed to function as both a standalone short-read-taxonomy pipeline as well as a component of the larger CAMP/CAP2 metagenome analysis pipeline. As such, it is both self-contained (ex. instructions included for the setup of a versioned environment, etc.), and seamlessly compatible with other CAMP modules (ex. ingests and spawns standardized input/output config files, etc.). 
 
-The CAMP binning pipeline replicates the functionality of MetaWRAP (one of the original ensemble `binning methods <https://github.com/bxlab/metaWRAP>`_) with i) better dependency conflict management and ii) improved integration with new binning algorithms.
-
 .. ..
 
  <!--- 
