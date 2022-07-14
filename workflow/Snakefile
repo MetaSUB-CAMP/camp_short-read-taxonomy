@@ -18,7 +18,6 @@ SAMPLES = ingest_samples(config['samples'], dirs.TMP)
     
 # --- Workflow output --- #
 
-
 rule all:
     input:
         join(dirs.OUT, 'samples.csv')
@@ -26,26 +25,26 @@ rule all:
 
 # --- Workflow steps --- #
 
-if config['mask']==True:
+#if config['mask']==True:
     # create new sample names 
-    
-    rule mask_reads:
-        # Corresponds to map_sort from camp_binning
-        input:
-            fwd = join(dirs.TMP,'{sample}_1.fastq'),
-            rev = join(dirs.TMP,'{sample}_2.fastq')
-        output:
-            join(dirs.OUT,'kraken2','{sample}.kraken'),
-            join(dirs.OUT,'kraken2','{sample}.kreport')
-        log:
-            join(dirs.LOG, 'kraken2', '{sample}.out'),
-        params:
-            kthreads=config['kraken_threads'],
-            basename=join(dirs.OUT,'kraken2','{sample}'),
-        shell:
-            """
-            kraken2 --db /home/cem2009/ReferenceFiles/kraken2/databases/humanmicroorg --threads {params.kthreads} --report {params.basename}.kreport --output {params.basename}.kraken --paired {input.fwd} {input.rev}
-            """      
+
+#    rule mask_reads:
+#        # Corresponds to map_sort from camp_binning
+#        input:
+#            fwd = join(dirs.TMP,'{sample}_1.fastq'),
+#            rev = join(dirs.TMP,'{sample}_2.fastq')
+ #       output:
+ #           join(dirs.OUT,'kraken2','{sample}.kraken'),
+ #           join(dirs.OUT,'kraken2','{sample}.kreport')
+ #       log:
+ #           join(dirs.LOG, 'kraken2', '{sample}.out'),
+ #       params:
+ #           kthreads=config['kraken_threads'],
+ #           basename=join(dirs.OUT,'kraken2','{sample}'),
+ #       shell:
+ #           """
+ #           kraken2 --db /home/cem2009/ReferenceFiles/kraken2/databases/humanmicroorg --threads {params.kthreads} --report {params.basename}.kreport --output {params.basename}.kraken --paired {input.fwd} {input.rev}
+    #        """      
 
 rule run_kraken2:
     # Corresponds to map_sort from camp_binning
