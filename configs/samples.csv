@@ -1,2 +1,2 @@
-sample_name,illumina_ctg,illumina_fwd,illumina_rev
-gut,/path/to/gut.fasta,/path/to/gut_1.fastq,/path/to/gut_2.fastq
+,illumina_fwd,illumina_rev
+zymotestsample,/athena/masonlab/scratch/users/btt4001/camp_dev/camp_short-read-quality-control/test_data/zymo_pos_cntrl.r1.fq.gz,/athena/masonlab/scratch/users/btt4001/camp_dev/camp_short-read-quality-control/test_data/zymo_pos_cntrl.r1.fq.gz

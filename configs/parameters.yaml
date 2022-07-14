@@ -3,9 +3,10 @@
 
 # --- general --- #
 
-some_constant:   2500
+# --- kraken_params --- #
 
+kraken_threads: 8
 
-# --- first_rule --- #
+# --- bracken_params --- #
 
-other_constant:    10000
+bracken_readlength: 150
