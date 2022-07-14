@@ -53,11 +53,11 @@ if classifier == 'MetaPhlAn3':
             fwd = join(dirs.TMP,'{sample}_1.fastq'),
             rev = join(dirs.TMP,'{sample}_2.fastq')
         output:
-            join(dirs.OUT,'kraken2','{sample}.kraken'),
+            join(dirs.OUT,'MetaPhlAn3','{sample}.metaphlan3'),
         log:
             join(dirs.LOG, 'MetaPhlAn3', '{sample}.out'),
         params:
-            taxthreads=config['taxthreads'],
+            threads=config['taxthreads'],
             basename=join(dirs.OUT,'MetaPhlAn3','{sample}'),
             database=config['MetaPhlAn3_database_location']
         shell:
@@ -105,16 +105,14 @@ if classifier == 'kraken2':
             join(dirs.LOG, 'kraken2', '{sample}.out'),
         threads: config['taxthreads']
         params:
-            taxthreads=config['taxthreads'],
             basename=join(dirs.OUT,'kraken2','{sample}'),
             database=config['kraken_bracken_database_location']
         shell:
             """
-            kraken2 --db {params.database} --threads {params.taxthreads} --report {params.basename}.kreport --output {params.basename}.kraken --paired {input.fwd} {input.rev}
+            kraken2 --db {params.database} --threads {threads} --report {params.basename}.kreport --output {params.basename}.kraken --paired {input.fwd} {input.rev}
             """    
 
     rule run_bracken:
-        # Corresponds to map_sort from camp_binning
         input:
             kreport = join(dirs.OUT,'kraken2','{sample}.kreport')
         output:
@@ -131,27 +129,59 @@ if classifier == 'kraken2':
             bracken_readlength=config['bracken_readlength'],
             database=config['kraken_bracken_database_location']
         shell:
-                """
-                bracken -r {params.bracken_readlength} -d {params.database}  -l S -i {input.kreport} -o {params.basename}.species.bracken
-                bracken -r {params.bracken_readlength} -d {params.database}  -l G -i {input.kreport} -o {params.basename}.genus.bracken
-                bracken -r {params.bracken_readlength} -d {params.database}  -l F -i {input.kreport} -o {params.basename}.family.bracken
-                bracken -r {params.bracken_readlength} -d {params.database}  -l O -i {input.kreport} -o {params.basename}.order.bracken
-                bracken -r {params.bracken_readlength} -d {params.database}  -l C -i {input.kreport} -o {params.basename}.class.bracken
-                bracken -r {params.bracken_readlength} -d {params.database} -l P -i {input.kreport} -o {params.basename}.phylum.bracken
-                ### MERGE BRACKEN REPORTS
-                """
+            """
+            bracken -r {params.bracken_readlength} -d {params.database}  -l S -i {input.kreport} -o {params.basename}.species.bracken
+            bracken -r {params.bracken_readlength} -d {params.database}  -l G -i {input.kreport} -o {params.basename}.genus.bracken
+            bracken -r {params.bracken_readlength} -d {params.database}  -l F -i {input.kreport} -o {params.basename}.family.bracken
+            bracken -r {params.bracken_readlength} -d {params.database}  -l O -i {input.kreport} -o {params.basename}.order.bracken
+            bracken -r {params.bracken_readlength} -d {params.database}  -l C -i {input.kreport} -o {params.basename}.class.bracken
+            bracken -r {params.bracken_readlength} -d {params.database} -l P -i {input.kreport} -o {params.basename}.phylum.bracken
+            """
+
+    rule combine_bracken:
+        input:
+            speciesfiles = expand(join(dirs.OUT,'bracken','{sample}.species.bracken'),sample = SAMPLES),
+            genusfiles = expand(join(dirs.OUT,'bracken','{sample}.genus.bracken'),sample = SAMPLES),
+            familyfiles = expand(join(dirs.OUT,'bracken','{sample}.family.bracken'),sample = SAMPLES),
+            orderfiles = expand(join(dirs.OUT,'bracken','{sample}.order.bracken'),sample = SAMPLES),
+            classfiles = expand(join(dirs.OUT,'bracken','{sample}.class.bracken'),sample = SAMPLES),
+            phylumfiles = expand(join(dirs.OUT,'bracken','{sample}.phylum.bracken'),sample = SAMPLES),
+        output:
+            join(dirs.OUT,'bracken','merged','merged.species.bracken.tsv'),
+            join(dirs.OUT,'bracken','merged','merged.genus.bracken.tsv'),
+            join(dirs.OUT,'bracken','merged','merged.family.bracken.tsv'),
+            join(dirs.OUT,'bracken','merged','merged.order.bracken.tsv'),
+            join(dirs.OUT,'bracken','merged','merged.class.bracken.tsv'),
+            join(dirs.OUT,'bracken','merged','merged.phylum.bracken.tsv'),
+        params:
+            brack_loc=join(dirs.OUT,'bracken'),
+        shell:
+            """
+            python2 scripts/combine_bracken_outputs.py --files {input.speciesfiles} -o {params.brack_loc}/merged/merged.species.bracken.tsv
+            python2 scripts/combine_bracken_outputs.py --files {input.genusfiles} -o {params.brack_loc}/merged/merged.genus.bracken.tsv
+            python2 scripts/combine_bracken_outputs.py --files {input.familyfiles} -o {params.brack_loc}/merged/merged.family.bracken.tsv
+            python2 scripts/combine_bracken_outputs.py --files {input.orderfiles} -o {params.brack_loc}/merged/merged.order.bracken.tsv
+            python2 scripts/combine_bracken_outputs.py --files {input.classfiles} -o {params.brack_loc}/merged/merged.class.bracken.tsv
+            python2 scripts/combine_bracken_outputs.py --files {input.phylumfiles} -o {params.brack_loc}/merged/merged.phylum.bracken.tsv
+            """
 
     rule make_config:
         input:
-            expand(join(dirs.OUT,'bracken','{sample}.species.bracken'), sample = SAMPLES)
+            join(dirs.OUT,'bracken','merged','merged.species.bracken.tsv'),
+            join(dirs.OUT,'bracken','merged','merged.genus.bracken.tsv'),
+            join(dirs.OUT,'bracken','merged','merged.family.bracken.tsv'),
+            join(dirs.OUT,'bracken','merged','merged.order.bracken.tsv'),
+            join(dirs.OUT,'bracken','merged','merged.class.bracken.tsv'),
+            join(dirs.OUT,'bracken','merged','merged.phylum.bracken.tsv'),
         output:
             join(dirs.OUT,'samples.csv')
         run:
             out = []
             for i in input:
-                out.append([i.split('/')[-1].split('.species.bracken')[0],i.replace('.species.bracken','.kraken'),i.replace('.species.bracken','.kreport'),i,i.replace('.species.bracken','.genus.bracken'),i.replace('.species.bracken','.family.bracken'),i.replace('.species.bracken','.order.bracken'),i.replace('.species.bracken','.class.bracken'),i.replace('.species.bracken','.phylum.bracken')])
-                df = pd.DataFrame(out)
-                df.columns = ['sample_ID','kraken2_output','kraken2_report','species.bracken','genus.bracken','family.bracken','order.bracken','class.bracken','phylum.bracken']
+                level=i.split('.')[1]
+                out.append([level,i])
+            df = pd.DataFrame(out)
+            df.columns = ['taxlevel','location']
             df.to_csv(str(output), index = False)
 
 
