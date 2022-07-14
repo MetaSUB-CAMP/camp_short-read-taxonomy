@@ -1,12 +1,14 @@
 #'''Parameters config.'''#
 
-
 # --- general --- #
 
-# --- kraken_params --- #
+taxthreads: 8
+mask: True 
+classification_method: 'kraken2' # options: kraken2 (default), MetaPhlAn3
 
-kraken_threads: 8
+# --- MetaPhlAn3_params --- #
+MetaPhlAn3_database_location: "/athena/masonlab/scratch/users/btt4001/databases/humann3_databases/metaphlan3"
 
-# --- bracken_params --- #
-
+# --- kraken/bracken_params --- #
+kraken_bracken_database_location: "/home/cem2009/ReferenceFiles/kraken2/databases/humanmicroorg"
 bracken_readlength: 150
