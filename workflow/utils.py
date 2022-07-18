@@ -24,8 +24,8 @@ def ingest_samples(samples, tmp):
     for f in os.listdir(tmp):
         os.system("rm -rf " + join(tmp, f))
     for i,l in enumerate(lst):
-        symlink(l[0], join(tmp, s[i] + '_1.fastq'))
-        symlink(l[1], join(tmp, s[i] + '_2.fastq'))
+        symlink(l[0], join(tmp, s[i] + '_1.fastq.gz'))
+        symlink(l[1], join(tmp, s[i] + '_2.fastq.gz'))
     return s
 
 

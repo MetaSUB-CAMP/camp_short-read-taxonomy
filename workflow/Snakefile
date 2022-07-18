@@ -17,12 +17,6 @@ dirs = Workflow_Dirs(config['work_dir'], "short-read-taxonomy")
 SAMPLES = ingest_samples(config['samples'], dirs.TMP)
 classifier = config['classification_method']
 
-# --- Workflow output --- #
-
-rule all:
-    input:
-        join(dirs.OUT, 'samples.csv')
-
 # --- Workflow steps --- #
 
 #if config['mask']==True:
@@ -47,57 +41,72 @@ rule all:
     #        """      
 
 if classifier == 'MetaPhlAn3':
-    rule MetaPhlAn3:
-        # Corresponds to map_sort from camp_binning
+    # --- Workflow output --- #
+
+    rule all:
         input:
-            fwd = join(dirs.TMP,'{sample}_1.fastq'),
-            rev = join(dirs.TMP,'{sample}_2.fastq')
+            join(dirs.OUT, 'samples_MetaPhlAn3.csv')
+
+
+    rule MetaPhlAn3:
+        input:
+            fwd = join(dirs.TMP,'{sample}_1.fastq.gz'),
+            rev = join(dirs.TMP,'{sample}_2.fastq.gz')
         output:
-            join(dirs.OUT,'MetaPhlAn3','{sample}.metaphlan3'),
+            join(dirs.OUT,'MetaPhlAn3','raw_output','{sample}.metaphlan3'),
         log:
             join(dirs.LOG, 'MetaPhlAn3', '{sample}.out'),
         params:
             threads=config['taxthreads'],
-            basename=join(dirs.OUT,'MetaPhlAn3','{sample}'),
+            basename=join(dirs.OUT,'MetaPhlAn3','raw_output','{sample}'),
+            basenametmp=join(dirs.TMP,'{sample}'),
             database=config['MetaPhlAn3_database_location']
         shell:
             """
-            metaphlan --bowtie2db {params.database} {input.fwd} {input.rev}
+            metaphlan --bowtie2db {params.database} --input_type fastq --force  -o {params.basename}.metaphlan3 --bowtie2out {params.basenametmp}.bowtie2.bz2 {input.fwd},{input.rev}
             """    
 
     rule merge_MetaPhlAn3_outputs:
-        # Corresponds to map_sort from camp_binning
         input:
-            metaphlan_output = join(dirs.OUT,'MetaPhlAn3','{sample}','XXX'),
+            metaphlanouts = expand(join(dirs.OUT,'MetaPhlAn3','raw_output','{sample}.metaphlan3'),sample = SAMPLES),
         output:
-            join(dirs.OUT,'MetaPhlAn3','{sample}','MetaPhlAn3_merged.tsv'),
+            join(dirs.OUT,'MetaPhlAn3','MetaPhlAn3_merged.tsv'),
         log:
-            join(dirs.LOG, 'MetaPhlAn3', '{sample}.merge.log.out'),
+            join(dirs.LOG, 'MetaPhlAn3', 'merge.log.out'),
         params:
-            basename=join(dirs.OUT,'kraken2','{sample}'),
+            outfile = join(dirs.OUT,'MetaPhlAn3','MetaPhlAn3_merged.tsv'),
         shell:
             """
-            XXX
+            merge_metaphlan_tables.py {input.metaphlanouts} > {params.outfile}
             """    
 
     rule make_config:
         input:
-           mergedfile = join(dirs.OUT,'MetaPhlAn3','MetaPhlAn3_merged.tsv')
+           join(dirs.OUT,'MetaPhlAn3','MetaPhlAn3_merged.tsv')
         output:
-            join(dirs.OUT, 'samples.csv')
+            join(dirs.OUT, 'samples_MetaPhlAn3.csv')
         run:
-            out = []
-            out.append(['all_samples',mergedfile])
+            for i in input:
+                out = []
+                out.append(['all_samples',i])
             df = pd.DataFrame(out)
+            print(df)
             df.columns = ['sample_ID','merged_output']
             df.to_csv(str(output), index = False)
 
 if classifier == 'kraken2':
+
+    # --- Workflow output --- #
+
+    rule all:
+        input:
+            join(dirs.OUT, 'samples_kraken2_bracken.csv')
+
     rule run_kraken2:
         # Corresponds to map_sort from camp_binning
         input:
-            fwd = join(dirs.TMP,'{sample}_1.fastq'),
-            rev = join(dirs.TMP,'{sample}_2.fastq')
+            fwd = join(dirs.TMP,'{sample}_1.fastq.gz'),
+            rev = join(dirs.TMP,'{sample}_2.fastq.gz')
         output:
             join(dirs.OUT,'kraken2','{sample}.kraken'),
             join(dirs.OUT,'kraken2','{sample}.kreport')
@@ -174,7 +183,7 @@ if classifier == 'kraken2':
             join(dirs.OUT,'bracken','merged','merged.class.bracken.tsv'),
             join(dirs.OUT,'bracken','merged','merged.phylum.bracken.tsv'),
         output:
-            join(dirs.OUT,'samples.csv')
+            join(dirs.OUT,'samples_kraken2_bracken.csv')
         run:
             out = []
             for i in input:
