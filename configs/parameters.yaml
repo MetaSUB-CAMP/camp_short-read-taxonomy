@@ -4,7 +4,7 @@
 
 taxthreads: 8
 mask: True 
-classification_method: 'kraken2' # options: kraken2 (default), MetaPhlAn3
+mode: 'all' # options: kraken2 (default), MetaPhlAn3, all
 
 # --- MetaPhlAn3_params --- #
 MetaPhlAn3_database_location: "/athena/masonlab/scratch/users/btt4001/databases/humann3_databases/metaphlan3"

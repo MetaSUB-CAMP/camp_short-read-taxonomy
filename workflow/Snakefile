@@ -15,55 +15,74 @@ dirs = Workflow_Dirs(config['work_dir'], "short-read-taxonomy")
 
 # Load sample names and input files 
 SAMPLES = ingest_samples(config['samples'], dirs.TMP)
-classifier = config['classification_method']
+mode = config['mode']
+
+def workflow_mode(wildcards):
+    if bool(config['mask'])==True:
+        fwd = join(dirs.TMP,'{sample}_1.masked.fastq.gz')
+        rev = join(dirs.TMP,'{sample}_2.masked.fastq.gz')
+        return [fwd,rev]
+    else:
+        fwd = join(dirs.TMP,'{sample}_1.fastq.gz')
+        rev = join(dirs.TMP,'{sample}_2.fastq.gz')
+        return [fwd,rev]
+
+def workflow_output(wildcards):
+    if config['mode'] == 'all':
+        return [join(dirs.OUT,'MetaPhlAn3','MetaPhlAn3_merged.tsv'),join(dirs.OUT,'bracken','merged','merged.species.bracken.tsv'),join(dirs.OUT,'bracken','merged','merged.genus.bracken.tsv'),join(dirs.OUT,'bracken','merged','merged.family.bracken.tsv'),join(dirs.OUT,'bracken','merged','merged.order.bracken.tsv'),join(dirs.OUT,'bracken','merged','merged.class.bracken.tsv'),join(dirs.OUT,'bracken','merged','merged.phylum.bracken.tsv')]
+    if config['mode'] == 'MetaPhlAn3':
+        return [join(dirs.OUT,'MetaPhlAn3','MetaPhlAn3_merged.tsv')]
+    if config['mode'] == 'kraken2':
+        return [join(dirs.OUT,'bracken','merged','merged.species.bracken.tsv'),join(dirs.OUT,'bracken','merged','merged.genus.bracken.tsv'),join(dirs.OUT,'bracken','merged','merged.family.bracken.tsv'),join(dirs.OUT,'bracken','merged','merged.order.bracken.tsv'),join(dirs.OUT,'bracken','merged','merged.class.bracken.tsv'),join(dirs.OUT,'bracken','merged','merged.phylum.bracken.tsv')]
+
+# --- Workflow output --- #
+
+rule all:
+    input:
+        join(dirs.OUT, 'samples.csv')
 
 # --- Workflow steps --- #
 
-#if config['mask']==True:
-    # create new sample names 
+if bool(config['mask'])==True:
 
-#    rule mask_reads:
-#        # Corresponds to map_sort from camp_binning
-#        input:
-#            fwd = join(dirs.TMP,'{sample}_1.fastq'),
-#            rev = join(dirs.TMP,'{sample}_2.fastq')
- #       output:
- #           join(dirs.OUT,'kraken2','{sample}_masked_1.fastq'),
- #           join(dirs.OUT,'kraken2','{sample}.kreport')
- #       log:
- #           join(dirs.LOG, 'kraken2', '{sample}.out'),
- #       params:
- #           kthreads=config['kraken_threads'],
- #           basename=join(dirs.OUT,'kraken2','{sample}'),
- #       shell:
- #           """
- #           kraken2 --db /home/cem2009/ReferenceFiles/kraken2/databases/humanmicroorg --threads {params.kthreads} --report {params.basename}.kreport --output {params.basename}.kraken --paired {input.fwd} {input.rev}
-    #        """      
-
-if classifier == 'MetaPhlAn3':
-    # --- Workflow output --- #
-
-    rule all:
-        input:
-            join(dirs.OUT, 'samples_MetaPhlAn3.csv')
-
-
-    rule MetaPhlAn3:
+    rule mask_reads:
         input:
             fwd = join(dirs.TMP,'{sample}_1.fastq.gz'),
             rev = join(dirs.TMP,'{sample}_2.fastq.gz')
         output:
+            join(dirs.TMP,'{sample}_1.masked.fastq.gz'),
+            join(dirs.TMP,'{sample}_2.masked.fastq.gz')
+        log:
+            join(dirs.LOG, 'masking', '{sample}.out'),
+        threads:
+            config['taxthreads']
+        params:
+            outfwd = join(dirs.TMP,'{sample}_1.masked.fastq.gz'),
+            outrev = join(dirs.TMP,'{sample}_2.masked.fastq.gz')
+        shell:
+            """
+            bbmask.sh in={input.fwd} out={params.outfwd} overwrite=t threads={threads}
+            bbmask.sh in={input.rev} out={params.outrev} overwrite=t threads={threads}
+            """      
+
+if mode == 'MetaPhlAn3'  or mode == 'all':
+
+    rule MetaPhlAn3:
+        input:
+            inputfiles=workflow_mode,
+        output:
             join(dirs.OUT,'MetaPhlAn3','raw_output','{sample}.metaphlan3'),
         log:
             join(dirs.LOG, 'MetaPhlAn3', '{sample}.out'),
+        threads:
+            config['taxthreads']
         params:
-            threads=config['taxthreads'],
             basename=join(dirs.OUT,'MetaPhlAn3','raw_output','{sample}'),
             basenametmp=join(dirs.TMP,'{sample}'),
-            database=config['MetaPhlAn3_database_location']
+            database=config['MetaPhlAn3_database_location'],
         shell:
             """
-            metaphlan --bowtie2db {params.database} --input_type fastq --force  -o {params.basename}.metaphlan3 --bowtie2out {params.basenametmp}.bowtie2.bz2 {input.fwd},{input.rev}
+            metaphlan --bowtie2db {params.database} --input_type fastq --force  -o {params.basename}.metaphlan3 --bowtie2out {params.basenametmp}.bowtie2.bz2 $(echo {input.inputfiles} | sed 's/ /,/g')
             """    
 
     rule merge_MetaPhlAn3_outputs:
@@ -80,45 +99,24 @@ if classifier == 'MetaPhlAn3':
             merge_metaphlan_tables.py {input.metaphlanouts} > {params.outfile}
             """    
 
-    rule make_config:
-        input:
-           join(dirs.OUT,'MetaPhlAn3','MetaPhlAn3_merged.tsv')
-        output:
-            join(dirs.OUT, 'samples_MetaPhlAn3.csv')
-        run:
-            for i in input:
-                out = []
-                out.append(['all_samples',i])
-            df = pd.DataFrame(out)
-            print(df)
-            df.columns = ['sample_ID','merged_output']
-            df.to_csv(str(output), index = False)
-
-if classifier == 'kraken2':
-
-    # --- Workflow output --- #
-
-    rule all:
-        input:
-            join(dirs.OUT, 'samples_kraken2_bracken.csv')
+if mode == 'kraken2' or mode == 'all':
 
     rule run_kraken2:
-        # Corresponds to map_sort from camp_binning
         input:
-            fwd = join(dirs.TMP,'{sample}_1.fastq.gz'),
-            rev = join(dirs.TMP,'{sample}_2.fastq.gz')
+            inputfiles=workflow_mode,
         output:
             join(dirs.OUT,'kraken2','{sample}.kraken'),
             join(dirs.OUT,'kraken2','{sample}.kreport')
         log:
             join(dirs.LOG, 'kraken2', '{sample}.out'),
-        threads: config['taxthreads']
+        threads: 
+            config['taxthreads']
         params:
             basename=join(dirs.OUT,'kraken2','{sample}'),
             database=config['kraken_bracken_database_location']
         shell:
             """
-            kraken2 --db {params.database} --threads {threads} --report {params.basename}.kreport --output {params.basename}.kraken --paired {input.fwd} {input.rev}
+            kraken2 --db {params.database} --threads {threads} --report {params.basename}.kreport --output {params.basename}.kraken --paired {input.inputfiles}
             """    
 
     rule run_bracken:
@@ -174,23 +172,24 @@ if classifier == 'kraken2':
             python2 scripts/combine_bracken_outputs.py --files {input.phylumfiles} -o {params.brack_loc}/merged/merged.phylum.bracken.tsv
             """
 
-    rule make_config:
-        input:
-            join(dirs.OUT,'bracken','merged','merged.species.bracken.tsv'),
-            join(dirs.OUT,'bracken','merged','merged.genus.bracken.tsv'),
-            join(dirs.OUT,'bracken','merged','merged.family.bracken.tsv'),
-            join(dirs.OUT,'bracken','merged','merged.order.bracken.tsv'),
-            join(dirs.OUT,'bracken','merged','merged.class.bracken.tsv'),
-            join(dirs.OUT,'bracken','merged','merged.phylum.bracken.tsv'),
-        output:
-            join(dirs.OUT,'samples_kraken2_bracken.csv')
-        run:
-            out = []
-            for i in input:
-                level=i.split('.')[1]
-                out.append([level,i])
-            df = pd.DataFrame(out)
-            df.columns = ['taxlevel','location']
-            df.to_csv(str(output), index = False)
+rule make_config:
+    input:
+        workflow_output
+    output:
+        join(dirs.OUT,'samples.csv')
+    run:
+        out = []
+        for i in input:
+            if 'MetaPhlAn3' in i:
+                classifiertype='MetaPhlAn3'
+            if 'bracken' in i:
+                classifiertype='kraken2'
+            out.append([classifiertype,i,config['mask']])
+        df = pd.DataFrame(out)
+        df.columns = ['classifier_type','location','mask_status']
+        df.to_csv(str(output), index = False)
+
+
+
 
 
