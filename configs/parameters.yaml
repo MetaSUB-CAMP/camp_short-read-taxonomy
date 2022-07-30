@@ -3,7 +3,7 @@
 # --- general --- #
 
 taxthreads: 8
-mask: True 
+mask: False 
 mode: 'all' # options: kraken2 (default), MetaPhlAn3, all
 
 # --- MetaPhlAn3_params --- #
@@ -12,3 +12,9 @@ MetaPhlAn3_database_location: "/athena/masonlab/scratch/users/btt4001/databases/
 # --- kraken/bracken_params --- #
 kraken_bracken_database_location: "/home/cem2009/ReferenceFiles/kraken2/databases/humanmicroorg"
 bracken_readlength: 150
+
+# --- xtree_params --- #
+xtree_gtdb_database_location: "/athena/masonlab/scratch/users/btt4001/databases/xtree_db/xtree_db_gtdb207_kmer29_comp2_20220722/GTDB207_filt.xtr"
+xtree_viral_database_location: "/athena/masonlab/scratch/users/btt4001/databases/xtree_db/xtree_db_genbankviralcomplete_99percclust_k17_comp0_20220726"
+xtree_fungiprotozoa_database_location: "/athena/masonlab/scratch/users/btt4001/databases/xtree_db/xtree_db_genbank_fungi_protozoa_complete_20220726"
+xtree_executable: "~/Utree/xtree_recompile"

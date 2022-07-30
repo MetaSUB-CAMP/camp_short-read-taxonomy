@@ -172,6 +172,62 @@ if mode == 'kraken2' or mode == 'all':
             python2 scripts/combine_bracken_outputs.py --files {input.phylumfiles} -o {params.brack_loc}/merged/merged.phylum.bracken.tsv
             """
 
+
+if mode == 'xtree' or mode == 'all' or mode == 'kraken2-xtree' or mode == 'MetaPhlAn3-xtree':
+
+    rule run_xtree_bacteria:
+        input:
+            inputfiles=workflow_mode,
+        output:
+            join(dirs.OUT,'xtree_bacteria','{sample}.ref'),
+            join(dirs.OUT,'xtree_bacteria','{sample}.cov')
+            join(dirs.OUT,'xtree_viral','{sample}.ref')
+            join(dirs.OUT,'xtree_viral','{sample}.cov')
+            join(dirs.OUT,'xtree_protozoa_fungi','{sample}.ref'),
+            join(dirs.OUT,'xtree_protozoa_fungi','{sample}.cov'),
+        log:
+            join(dirs.LOG, 'xtree', '{sample}.out'),
+        threads: 
+            config['taxthreads']
+        params:
+            basename_b=join(dirs.OUT,'xtree_bacteria','{sample}'),
+            basename_v=join(dirs.OUT,'xtree_viral','{sample}'),
+            basename_fp=join(dirs.OUT,'xtree_protozoa_fungi','{sample}'),
+            bactarcdb=config['xtree_gtdb_database_location']
+            viraldb=config['xtree_viral']
+            protfundb=config['xtree_protozoa_fungi']
+            xtree_executable=config['xtree_executable']
+        shell:
+            """
+            cat {input.inputfiles} | {params.xtree_executable} --seqs - --threads {threads} --db {params.bactarcdb} --ref-out {params.basename_b}.ref --cov-out {params.basename_b}.cov --redistribute
+            cat {input.inputfiles} | {params.xtree_executable} --seqs - --threads {threads} --db {params.protfundb} --ref-out {params.basename_v}.ref --cov-out {params.basename_v}.cov --redistribute
+            cat {input.inputfiles} | {params.xtree_executable} --seqs - --threads {threads} --db {params.viraldb} --ref-out {params.basename_fp}.ref --cov-out {params.basename_fp}.cov --redistribute
+            """    
+
+    rule parse_xtree_output:
+        input:
+            xtree_bac_refs = expand(join(dirs.OUT,'xtree_bacteria','{sample}.ref'),sample = SAMPLES),
+            xtree_bac_covs = expand(join(dirs.OUT,'xtree_bacteria','{sample}.cov'),sample = SAMPLES),
+            xtree_viral_refs = expand(join(dirs.OUT,'xtree_viral','{sample}.ref'),sample = SAMPLES),
+            xtree_viral_covs = expand(join(dirs.OUT,'xtree_viral','{sample}.cov'),sample = SAMPLES),
+            xtree_protozoafungi_refs = expand(join(dirs.OUT,'xtree_protozoa_fungi','{sample}.ref'),sample = SAMPLES),
+            xtree_protozoafungi_covs = expand(join(dirs.OUT,'xtree_protozoa_fungi','{sample}.cov'),sample = SAMPLES),
+        output:
+            join(dirs.OUT,'merged','xtree_bacterial_archaeal_merged.tsv'),
+            join(dirs.OUT,'merged','xtree_bacterial_archaeal_merged_raw.tsv'),
+            join(dirs.OUT,'merged','xtree_viral_merged.tsv'),
+            join(dirs.OUT,'merged','xtree_viral_merged_raw.tsv'),
+            join(dirs.OUT,'merged','xtree_protozoa_fungi_merged.tsv'),
+            join(dirs.OUT,'merged','xtree_protozoa_fungi_merged_raw.tsv'),
+        log:
+            join(dirs.LOG, 'xtree', '{sample}.merging.out'),
+        threads: 
+            config['taxthreads']
+        params:
+            bacarcouts = join(dirs.OUT,'xtree_bacteria')
+            viralouts = join(dirs.OUT,'xtree_viral')
+            protfunouts = join(dirs.OUT,'xtree_protozoa')
+
 rule make_config:
     input:
         workflow_output
