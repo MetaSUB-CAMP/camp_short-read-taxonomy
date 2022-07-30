@@ -18,3 +18,12 @@ xtree_gtdb_database_location: "/athena/masonlab/scratch/users/btt4001/databases/
 xtree_viral_database_location: "/athena/masonlab/scratch/users/btt4001/databases/xtree_db/xtree_db_genbankviralcomplete_99percclust_k17_comp0_20220726"
 xtree_fungiprotozoa_database_location: "/athena/masonlab/scratch/users/btt4001/databases/xtree_db/xtree_db_genbank_fungi_protozoa_complete_20220726"
 xtree_executable: "~/Utree/xtree_recompile"
+thresh_bac: 0.02
+hthresh_bac : 0.05
+uthresh_bac : 0.01
+thresh_viral: 0.02
+hthresh_viral : 0.05
+uthresh_viral : 0.01
+thresh_fungprot: 0.02
+hthresh_fungprot : 0.05
+uthresh_fungprot : 0.01

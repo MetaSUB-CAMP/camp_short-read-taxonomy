@@ -206,27 +206,49 @@ if mode == 'xtree' or mode == 'all' or mode == 'kraken2-xtree' or mode == 'MetaP
 
     rule parse_xtree_output:
         input:
-            xtree_bac_refs = expand(join(dirs.OUT,'xtree_bacteria','{sample}.ref'),sample = SAMPLES),
-            xtree_bac_covs = expand(join(dirs.OUT,'xtree_bacteria','{sample}.cov'),sample = SAMPLES),
-            xtree_viral_refs = expand(join(dirs.OUT,'xtree_viral','{sample}.ref'),sample = SAMPLES),
-            xtree_viral_covs = expand(join(dirs.OUT,'xtree_viral','{sample}.cov'),sample = SAMPLES),
-            xtree_protozoafungi_refs = expand(join(dirs.OUT,'xtree_protozoa_fungi','{sample}.ref'),sample = SAMPLES),
-            xtree_protozoafungi_covs = expand(join(dirs.OUT,'xtree_protozoa_fungi','{sample}.cov'),sample = SAMPLES),
+            xtree_bac = join(dirs.OUT,'xtree_bacteria'),
+            xtree_viral = join(dirs.OUT,'xtree_viral'),
+            xtree_protozoafungi = join(dirs.OUT,'xtree_protozoa_fungi'),
         output:
-            join(dirs.OUT,'merged','xtree_bacterial_archaeal_merged.tsv'),
-            join(dirs.OUT,'merged','xtree_bacterial_archaeal_merged_raw.tsv'),
-            join(dirs.OUT,'merged','xtree_viral_merged.tsv'),
-            join(dirs.OUT,'merged','xtree_viral_merged_raw.tsv'),
-            join(dirs.OUT,'merged','xtree_protozoa_fungi_merged.tsv'),
-            join(dirs.OUT,'merged','xtree_protozoa_fungi_merged_raw.tsv'),
+            join(dirs.OUT,'xtree_bacterial_archaeal_counts.tsv'),
+            join(dirs.OUT,'xtree_bacterial_archaeal_counts_raw.tsv'),
+            join(dirs.OUT,'xtree_bacterial_archaeal_ra.tsv'),
+            join(dirs.OUT,'xtree_bacterial_archaeal_ra_raw.tsv'),
+            join(dirs.OUT,'xtree_bacterial_archaeal_coverages.tsv'),
+            join(dirs.OUT,'xtree_bacterial_archaeal_unique_coverages.tsv'),
+            join(dirs.OUT,'xtree_viral_counts.tsv'),
+            join(dirs.OUT,'xtree_viral_counts_raw.tsv'),
+            join(dirs.OUT,'xtree_viral_ra.tsv'),
+            join(dirs.OUT,'xtree_viral_ra_raw.tsv'),
+            join(dirs.OUT,'xtree_viral_coverages.tsv'),
+            join(dirs.OUT,'xtree_viral_unique_coverages.tsv'),
+            join(dirs.OUT,'xtree_protozoa_fungi_counts.tsv'),
+            join(dirs.OUT,'xtree_protozoa_fungi_counts_raw.tsv'),
+            join(dirs.OUT,'xtree_protozoa_fungi_ra.tsv'),
+            join(dirs.OUT,'xtree_protozoa_fungi_ra_raw.tsv'),
+            join(dirs.OUT,'xtree_protozoa_fungi_coverages.tsv'),
+            join(dirs.OUT,'xtree_protozoa_fungi_unique_coverages.tsv'),
         log:
             join(dirs.LOG, 'xtree', '{sample}.merging.out'),
         threads: 
             config['taxthreads']
         params:
-            bacarcouts = join(dirs.OUT,'xtree_bacteria')
-            viralouts = join(dirs.OUT,'xtree_viral')
-            protfunouts = join(dirs.OUT,'xtree_protozoa')
+            outdir = dirs.OUT
+            hthresh_bac = config['hthresh_bac']
+            uthresh_bac = config['uthresh_bac']
+            thresh_bac = config['thresh_bac']
+            hthresh_viral = config['hthresh_viral']
+            uthresh_viral = config['uthresh_viral']
+            thresh_viral = config['thresh_viral']
+            hthresh_fungprot = config['hthresh_fungprot']
+            uthresh_fungprot = config['uthresh_fungprot']
+            thresh_fungprot = config['thresh_fungprot']
+        shell: 
+        """
+        Rscript scripts/post_process_xtree.R {input.xtree_bac} {params.thresh} {params.hthresh} {params.uthresh} {params.outdir} bacterial_archaeal
+        Rscript scripts/post_process_xtree.R {input.xtree_viral} {params.thresh} {params.hthresh} {params.uthresh} {params.outdir} viral 
+        Rscript scripts/post_process_xtree.R {input.xtree_protozoafungi} {params.thresh} {params.hthresh} {params.uthresh} {params.outdir} protozoa_fungi 
+        """
 
 rule make_config:
     input:
