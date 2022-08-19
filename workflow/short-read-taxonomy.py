@@ -60,7 +60,8 @@ def run(workflow, work_dir, samples, unit_test, slurm, cap2):
         conda_prefix = env_dir,
         generate_unit_tests = unit_test_dir,
         cluster_config = cluster_config,
-        cluster = cluster_subcmd
+        cluster = cluster_subcmd,
+        cores = 16
     )
 
 

@@ -44,7 +44,6 @@ class Workflow_Dirs:
         if not exists(self.TMP):
             makedirs(self.TMP)
         if not exists(self.LOG):
-            # Add custom subdirectories to organize rule logs
             makedirs(self.LOG)
 
 
