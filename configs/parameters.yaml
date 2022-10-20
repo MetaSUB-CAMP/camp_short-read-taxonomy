@@ -1,34 +1,35 @@
 #'''Parameters config.'''#
 
+
 # --- general --- #
 
-taxthreads: 8
+ext: "/home/lam4003/bin/camp_short-read-taxonomy/workflow/ext"
 mask: False 
-MetaPhlAn3: False 
-kraken2: False 
-xtree_bacterial_archaeal: False 
-xtree_viral: True 
-xtree_fungi_protozoa: False 
+metaphlan: True 
+kraken2: True 
+# xtree kingdom options: bacterial_archaeal, viral, protozoa_fungi
+# Separate options on one line with commas (ex. viral,protozoa_fungi)
+xtree: 
 
-# --- MetaPhlAn3_params --- #
-MetaPhlAn3_database_location: "/athena/masonlab/scratch/users/btt4001/databases/humann3_databases/metaphlan3"
 
-# --- kraken/bracken_params --- #
-kraken_bracken_database_location: "/home/cem2009/ReferenceFiles/kraken2/databases/humanmicroorg"
-bracken_readlength: 150
+# --- metaphlan --- #
 
-# --- xtree_params --- #
-xtree_gtdb_database_location: "/athena/masonlab/scratch/users/btt4001/databases/xtree_db/xtree_db_gtdb207_kmer29_comp2_20220722/GTDB207_filt.xtr"
-xtree_viral_database_location: "/athena/masonlab/scratch/users/btt4001/databases/xtree_db/xtree_db_genbankviralcomplete_99percclust_k17_comp0_20220726/genbankviralcomplete_99percclust_k17_comp0_20220726.xtr"
-xtree_fungiprotozoa_database_location: "/athena/masonlab/scratch/users/btt4001/databases/xtree_db/xtree_db_genbank_fungi_protozoa_complete_20220726/genbank_fungi_protozoa_complete_20220726.xtr"
-xtree_executable: "~/UTree/xtree_recompile"
-mappingfile_loc: "/athena/masonlab/scratch/users/btt4001/camp_dev/camp_short-read-taxonomy/ext_files/xtree_all_db_mapping"
-thresh_bac: 0.02
-hthresh_bac : 0.05
-uthresh_bac : 0.01
-thresh_viral: 0.02
-hthresh_viral : 0.05
-uthresh_viral : 0.01
-thresh_fungprot: 0.02
-hthresh_fungprot : 0.05
-uthresh_fungprot : 0.01
+metaphlan_database: "/athena/masonlab/scratch/databases/metagenomics/metaphlan_20220926"
+
+
+# --- kraken2/bracken --- #
+
+kraken_bracken_database: "/athena/masonlab/scratch/databases/metagenomics/Kraken2"
+kraken2_executable: "/home/lam4003/bin/kraken2/kraken2"
+read_len: 150
+
+
+# --- xtree --- #
+
+bacterial_archaeal_database: "/athena/masonlab/scratch/users/btt4001/databases/xtree_db/xtree_db_gtdb207_kmer29_comp2_20220722/GTDB207_filt.xtr"
+viral_database: "/athena/masonlab/scratch/users/btt4001/databases/xtree_db/xtree_db_genbankviralcomplete_99percclust_k17_comp0_20220726/genbankviralcomplete_99percclust_k17_comp0_20220726.xtr"
+protozoa_fungi_database: "/athena/masonlab/scratch/users/btt4001/databases/xtree_db/xtree_db_genbank_fungi_protozoa_complete_20220726/genbank_fungi_protozoa_complete_20220726.xtr"
+xtree_executable: "/home/btt4001/UTree/xtree_recompile"
+thresh: 0.02
+hthresh : 0.05
+uthresh : 0.01
