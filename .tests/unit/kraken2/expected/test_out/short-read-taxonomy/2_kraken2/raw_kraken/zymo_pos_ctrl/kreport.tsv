@@ -1,0 +1,128 @@
+  2.00	20	20	U	0	unclassified
+ 98.00	980	0	R	1	root
+ 98.00	980	4	R1	131567	  cellular organisms
+ 89.60	896	2	D	2	    Bacteria
+ 86.80	868	0	P	1224	      Proteobacteria
+ 86.80	868	1	C	1236	        Gammaproteobacteria
+ 85.30	853	0	O	135614	          Xanthomonadales
+ 85.30	853	0	F	32033	            Xanthomonadaceae
+ 85.30	853	0	G	338	              Xanthomonas
+ 85.30	853	0	S	456327	                Xanthomonas euvesicatoria
+ 85.30	853	0	S1	359387	                  Xanthomonas euvesicatoria pv. alfalfae
+ 85.30	853	853	S2	1365647	                    Xanthomonas euvesicatoria pv. alfalfae CFBP 3836
+  1.20	12	0	O	91347	          Enterobacterales
+  1.20	12	2	F	543	            Enterobacteriaceae
+  0.60	6	3	G	590	              Salmonella
+  0.30	3	3	S	28901	                Salmonella enterica
+  0.20	2	0	G	561	              Escherichia
+  0.20	2	2	S	562	                Escherichia coli
+  0.20	2	2	G	570	              Klebsiella
+  0.20	2	0	O	72274	          Pseudomonadales
+  0.20	2	0	F	135621	            Pseudomonadaceae
+  0.20	2	1	G	286	              Pseudomonas
+  0.10	1	0	G1	136841	                Pseudomonas aeruginosa group
+  0.10	1	1	S	287	                  Pseudomonas aeruginosa
+  2.60	26	0	D1	1783272	      Terrabacteria group
+  1.90	19	0	P	1239	        Firmicutes
+  1.90	19	0	C	91061	          Bacilli
+  1.10	11	0	O	186826	            Lactobacillales
+  0.60	6	0	F	33958	              Lactobacillaceae
+  0.60	6	0	G	1578	                Lactobacillus
+  0.60	6	6	S	1613	                  Lactobacillus fermentum
+  0.50	5	0	F	81852	              Enterococcaceae
+  0.50	5	0	G	1350	                Enterococcus
+  0.50	5	5	S	1351	                  Enterococcus faecalis
+  0.80	8	0	O	1385	            Bacillales
+  0.30	3	0	F	90964	              Staphylococcaceae
+  0.30	3	0	G	1279	                Staphylococcus
+  0.20	2	2	S	1280	                  Staphylococcus aureus
+  0.10	1	1	S	1282	                  Staphylococcus epidermidis
+  0.30	3	0	F	186817	              Bacillaceae
+  0.30	3	2	G	1386	                Bacillus
+  0.10	1	0	G1	653685	                  Bacillus subtilis group
+  0.10	1	1	S	1423	                    Bacillus subtilis
+  0.20	2	0	F	186820	              Listeriaceae
+  0.20	2	0	G	1637	                Listeria
+  0.20	2	1	S	1639	                  Listeria monocytogenes
+  0.10	1	1	S1	393119	                    Listeria monocytogenes FSL J1-208
+  0.70	7	0	P	201174	        Actinobacteria
+  0.70	7	0	C	1760	          Actinobacteria
+  0.20	2	0	O	85006	            Micrococcales
+  0.20	2	0	F	85021	              Intrasporangiaceae
+  0.20	2	0	G	53457	                Janibacter
+  0.20	2	2	S	262209	                  Janibacter melonis
+  0.20	2	0	O	85011	            Streptomycetales
+  0.20	2	0	F	2062	              Streptomycetaceae
+  0.20	2	1	G	1883	                Streptomyces
+  0.10	1	0	S	348043	                  Streptomyces davaonensis
+  0.10	1	1	S1	1214101	                    Streptomyces davaonensis JCM 4913
+  0.10	1	0	O	85004	            Bifidobacteriales
+  0.10	1	0	F	31953	              Bifidobacteriaceae
+  0.10	1	0	G	2701	                Gardnerella
+  0.10	1	1	S	2702	                  Gardnerella vaginalis
+  0.10	1	0	O	85009	            Propionibacteriales
+  0.10	1	0	F	85015	              Nocardioidaceae
+  0.10	1	1	G	1839	                Nocardioides
+  0.10	1	0	O	85010	            Pseudonocardiales
+  0.10	1	0	F	2070	              Pseudonocardiaceae
+  0.10	1	0	G	1847	                Pseudonocardia
+  0.10	1	0	S	240495	                  Pseudonocardia dioxanivorans
+  0.10	1	1	S1	675635	                    Pseudonocardia dioxanivorans CB1190
+  8.00	80	0	D	2759	    Eukaryota
+  7.00	70	0	D1	2698737	      Sar
+  7.00	70	0	D2	33630	        Alveolata
+  7.00	70	0	P	5794	          Apicomplexa
+  7.00	70	0	C	422676	            Aconoidasida
+  7.00	70	0	O	5819	              Haemosporida
+  7.00	70	0	F	1639119	                Plasmodiidae
+  7.00	70	0	G	5820	                  Plasmodium
+  7.00	70	0	G1	418104	                    Plasmodium (Haemamoeba)
+  7.00	70	70	S	85471	                      Plasmodium relictum
+  0.80	8	0	D1	33154	      Opisthokonta
+  0.70	7	0	K	33208	        Metazoa
+  0.70	7	0	K1	6072	          Eumetazoa
+  0.70	7	0	K2	33213	            Bilateria
+  0.70	7	0	K3	33511	              Deuterostomia
+  0.70	7	0	P	7711	                Chordata
+  0.70	7	0	P1	89593	                  Craniata
+  0.70	7	0	P2	7742	                    Vertebrata
+  0.70	7	0	P3	7776	                      Gnathostomata
+  0.70	7	0	P4	117570	                        Teleostomi
+  0.70	7	0	P5	117571	                          Euteleostomi
+  0.70	7	0	P6	8287	                            Sarcopterygii
+  0.70	7	0	P7	1338369	                              Dipnotetrapodomorpha
+  0.70	7	0	P8	32523	                                Tetrapoda
+  0.70	7	0	P9	32524	                                  Amniota
+  0.70	7	0	C	40674	                                    Mammalia
+  0.70	7	0	C1	32525	                                      Theria
+  0.70	7	0	C2	9347	                                        Eutheria
+  0.70	7	0	C3	1437010	                                          Boreoeutheria
+  0.70	7	0	C4	314146	                                            Euarchontoglires
+  0.70	7	0	O	9443	                                              Primates
+  0.70	7	0	O1	376913	                                                Haplorrhini
+  0.70	7	0	O2	314293	                                                  Simiiformes
+  0.70	7	0	O3	9526	                                                    Catarrhini
+  0.70	7	0	O4	314295	                                                      Hominoidea
+  0.70	7	0	F	9604	                                                        Hominidae
+  0.70	7	0	F1	207598	                                                          Homininae
+  0.70	7	0	G	9605	                                                            Homo
+  0.70	7	7	S	9606	                                                              Homo sapiens
+  0.10	1	0	K	4751	        Fungi
+  0.10	1	0	K1	451864	          Dikarya
+  0.10	1	0	P	4890	            Ascomycota
+  0.10	1	0	P1	716545	              saccharomyceta
+  0.10	1	0	P2	147537	                Saccharomycotina
+  0.10	1	0	C	4891	                  Saccharomycetes
+  0.10	1	1	O	4892	                    Saccharomycetales
+  0.20	2	0	D1	2611352	      Discoba
+  0.20	2	0	P	33682	        Euglenozoa
+  0.20	2	0	C	5653	          Kinetoplastea
+  0.20	2	0	C1	2704647	            Metakinetoplastina
+  0.20	2	0	O	2704949	              Trypanosomatida
+  0.20	2	0	F	5654	                Trypanosomatidae
+  0.20	2	0	F1	1286322	                  Leishmaniinae
+  0.20	2	0	G	5658	                    Leishmania
+  0.20	2	0	G1	38568	                      Leishmania
+  0.20	2	0	G2	38582	                        Leishmania mexicana species complex
+  0.20	2	0	S	5665	                          Leishmania mexicana
+  0.20	2	2	S1	929439	                            Leishmania mexicana MHOM/GT/2001/U1103

@@ -3,338 +3,271 @@
 
 from contextlib import redirect_stderr
 import os
-from os import makedirs
-from os.path import basename, join
+from os.path import abspath, basename, dirname, exists, join
 import pandas as pd
-from utils import Workflow_Dirs, ingest_samples, estimate_read_length
+from shutil import copy
+from utils import Workflow_Dirs, ingest_samples, scrub_fastq_captions
 
 
 # Load and/or make the working directory structure
-dirs = Workflow_Dirs(config['work_dir'], "short-read-taxonomy")
+dirs = Workflow_Dirs(config['work_dir'], 'short-read-taxonomy')
 
 
 # Load sample names and input files 
 SAMPLES = ingest_samples(config['samples'], dirs.TMP)
+RANKS   = ['species', 'genus', 'family', 'order', 'class', 'phylum']
+RANK_ABBREV = { 'species' : 'S', 'genus' : 'G', 'family' : 'F', 'order' : 'O', 'class' : 'C', 'phylum' : 'P'}
+
+# Specify the location of any external resources and scripts
+dirs_ext = config['ext'] # join(dirname(abspath(__file__)), 'ext')
+dirs_scr = join(dirs_ext, 'scripts')
+
 
 # --- Workflow output --- #
 
 
+def read_masking(wildcards):
+	sample = wildcards.sample
+	fwd = join(dirs.TMP, sample + '_1.fastq.gz')
+	rev = join(dirs.TMP, sample + '_2.fastq.gz')
+	if bool(config['mask']):
+		fwd = join(dirs.OUT, '0_masked_fastqs', sample + '_1.masked.fastq.gz')
+		rev = join(dirs.OUT, '0_masked_fastqs', sample + '_2.masked.fastq.gz')
+	return([fwd,rev])
+
+
 def workflow_mode(wildcards):
-	if bool(config['mask'])==True:
-		fwd = join(dirs.TMP,'{sample}_1.masked.fastq.gz')
-		rev = join(dirs.TMP,'{sample}_2.masked.fastq.gz')
-		return [fwd,rev]
-	else:
-		fwd = join(dirs.TMP,'{sample}_1.fastq.gz')
-		rev = join(dirs.TMP,'{sample}_2.fastq.gz')
-		return [fwd,rev]
-
-
-def workflow_output(wildcards):
-	outputlist = []
-	if bool(config['MetaPhlAn3']):
-		outputlist.append(join(dirs.OUT,'MetaPhlAn3','MetaPhlAn3_merged.tsv'))
+	out = []
+	if bool(config['metaphlan']):
+		out.append(join(dirs.OUT,'1_metaphlan','metaphlan.tsv'))
 	if bool(config['kraken2']):
-		outputlist.extend([join(dirs.OUT,'bracken','merged','merged.species.bracken.tsv'),join(dirs.OUT,'bracken','merged','merged.genus.bracken.tsv'),join(dirs.OUT,'bracken','merged','merged.family.bracken.tsv'),join(dirs.OUT,'bracken','merged','merged.order.bracken.tsv'),join(dirs.OUT,'bracken','merged','merged.class.bracken.tsv'),join(dirs.OUT,'bracken','merged','merged.phylum.bracken.tsv')])
-	if bool(config['xtree_bacterial_archaeal']):
-		outputlist.extend([join(dirs.OUT,'xtree_merged','xtree_bacterial_archaeal_counts.tsv'),join(dirs.OUT,'xtree_merged','xtree_bacterial_archaeal_counts_raw.tsv'),join(dirs.OUT,'xtree_merged','xtree_bacterial_archaeal_ra.tsv'),join(dirs.OUT,'xtree_merged','xtree_bacterial_archaeal_ra_raw.tsv'),join(dirs.OUT,'xtree_merged','xtree_bacterial_archaeal_coverages.tsv'),join(dirs.OUT,'xtree_merged','xtree_bacterial_archaeal_unique_coverages.tsv')])
-	if bool(config['xtree_viral']):	
-		outputlist.extend([join(dirs.OUT,'xtree_merged','xtree_viral_counts.tsv'),join(dirs.OUT,'xtree_merged','xtree_viral_counts_raw.tsv'),join(dirs.OUT,'xtree_merged','xtree_viral_ra.tsv'),join(dirs.OUT,'xtree_merged','xtree_viral_ra_raw.tsv'),join(dirs.OUT,'xtree_merged','xtree_viral_coverages.tsv'),join(dirs.OUT,'xtree_merged','xtree_viral_unique_coverages.tsv')])
-	if bool(config['xtree_fungi_protozoa']):		
-		outputlist.extend([join(dirs.OUT,'xtree_merged','xtree_protozoa_fungi_counts.tsv'),join(dirs.OUT,'xtree_merged','xtree_protozoa_fungi_counts_raw.tsv'),join(dirs.OUT,'xtree_merged','xtree_protozoa_fungi_ra.tsv'),join(dirs.OUT,'xtree_merged','xtree_protozoa_fungi_ra_raw.tsv'),join(dirs.OUT,'xtree_merged','xtree_protozoa_fungi_coverages.tsv'),join(dirs.OUT,'xtree_merged','xtree_protozoa_fungi_unique_coverages.tsv')])
-	return(outputlist)
+		out.extend(expand(join(dirs.OUT, '2_kraken2', 'merged', \
+			'bracken_{rank}.tsv'), rank = RANKS))
+	if config['xtree']:
+		XTREE = [g.strip() for g in config['xtree'].split(',')]
+		for g in XTREE:
+			out_dir = join(dirs.OUT, '3_xtree', g)
+			if not exists(out_dir):
+				os.makedirs(out_dir)
+		out.extend(expand(join(dirs.OUT, '3_xtree', 'merged', \
+			'{xtree_group}_ra.tsv'), xtree_group = XTREE))
+	return(out)
+
 
 rule all:
 	input:
-		join(dirs.OUT, 'samples.csv')
+		join(dirs.OUT, 'final_reports', 'complete.txt')
+
 
 # --- Workflow steps --- #
+
 
 rule mask_reads:
 	input:
 		fwd = join(dirs.TMP,'{sample}_1.fastq.gz'),
-		rev = join(dirs.TMP,'{sample}_2.fastq.gz')
+		rev = join(dirs.TMP,'{sample}_2.fastq.gz'),
 	output:
-		join(dirs.TMP,'{sample}_1.masked.fastq.gz'),
-		join(dirs.TMP,'{sample}_2.masked.fastq.gz')
+		fwd = join(dirs.OUT, '0_masked_fastqs', '{sample}_1.masked.fastq.gz'),
+		rev = join(dirs.OUT, '0_masked_fastqs', '{sample}_2.masked.fastq.gz'),
 	log:
 		join(dirs.LOG, 'masking', '{sample}.out'),
 	threads:
-		config['taxthreads']
-	params:
-		outfwd = join(dirs.TMP,'{sample}_1.masked.fastq.gz'),
-		outrev = join(dirs.TMP,'{sample}_2.masked.fastq.gz')
+		config['mask_reads_threads'],
 	shell:
 		"""
-		bbmask.sh in={input.fwd} out={params.outfwd} overwrite=t threads={threads}
-		bbmask.sh in={input.rev} out={params.outrev} overwrite=t threads={threads}
-		"""      
+		bbmask.sh in={input.fwd} out={output.fwd} overwrite=t threads={threads} > {log} 2>&1
+		bbmask.sh in={input.rev} out={output.rev} overwrite=t threads={threads} > {log} 2>&1
+		"""	  
 
-rule MetaPhlAn3:
+
+rule scrub_fastq_captions:
 	input:
-		inputfiles=workflow_mode,
+		join(dirs.TMP,'{sample}_{dir}.fastq.gz'),
 	output:
-		join(dirs.OUT,'MetaPhlAn3','raw_output','{sample}.metaphlan3'),
+		join(dirs.OUT,'1_metaphlan','{sample}_{dir}.fastq'),
+	resources:
+		mem_mb = config['scrub_fastq_mem_mb'],
+	run:
+		scrub_fastq_captions(str(input), str(output))
+
+
+rule metaphlan:
+	input:
+		lambda wildcards: expand(join(dirs.OUT,'1_metaphlan','{sample}_{dir}.fastq'), sample = wildcards.sample, dir = ['1', '2']),
+	output:
+		join(dirs.OUT,'1_metaphlan','raw_output','{sample}.metaphlan'),
 	log:
-		join(dirs.LOG, 'MetaPhlAn3', '{sample}.out'),
+		join(dirs.LOG, 'metaphlan', '{sample}.out'),
+	conda:
+		join(config['env_yamls'], 'metaphlan.yaml'),
 	threads:
-		config['taxthreads']
+		config['metaphlan_threads'],
+	resources:
+		mem_mb = config['metaphlan_mem_mb'],
 	params:
-		basename=join(dirs.OUT,'MetaPhlAn3','raw_output','{sample}'),
-		basenametmp=join(dirs.TMP,'{sample}'),
-		database=config['MetaPhlAn3_database_location'],
+		out_dir = join(dirs.OUT,'1_metaphlan','raw_output'),
+		prefix=join(dirs.OUT,'1_metaphlan','raw_output', '{sample}'),
+		database = config['metaphlan_database'],
 	shell:
 		"""
-		metaphlan --bowtie2db {params.database} --input_type fastq --force  -o {params.basename}.metaphlan3 --bowtie2out {params.basenametmp}.bowtie2.bz2 $(echo {input.inputfiles} | sed 's/ /,/g')
-		"""    
+		mkdir -p {params.out_dir}
+		metaphlan --nproc {threads} --bowtie2db {params.database} --input_type fastq --force  -o {output} --bowtie2out {params.prefix}.bowtie2.bz2 $(echo {input} | sed 's/ /,/g') > {log} 2>&1
+		""" 
 
-rule merge_MetaPhlAn3_outputs:
+
+rule merge_metaphlan_outputs:
 	input:
-		metaphlanouts = expand(join(dirs.OUT,'MetaPhlAn3','raw_output','{sample}.metaphlan3'),sample = SAMPLES),
+		expand(join(dirs.OUT,'1_metaphlan','raw_output','{sample}.metaphlan'),sample = SAMPLES),
 	output:
-		join(dirs.OUT,'MetaPhlAn3','MetaPhlAn3_merged.tsv'),
-	log:
-		join(dirs.LOG, 'MetaPhlAn3', 'merge.log.out'),
-	params:
-		outfile = join(dirs.OUT,'MetaPhlAn3','MetaPhlAn3_merged.tsv'),
+		join(dirs.OUT,'1_metaphlan','metaphlan.tsv'),
+	conda:
+		join(config['env_yamls'], 'metaphlan.yaml'),
+	params: 
+		ext_script = join(dirs_scr, 'merge_metaphlan_tables.py'),
 	shell:
 		"""
-		merge_metaphlan_tables.py {input.metaphlanouts} > {params.outfile}
-		"""    
+		python3 {params.ext_script} {input} > {output}
+		"""	
 
-rule run_kraken2:
+
+rule kraken2:
 	input:
-		inputfiles=workflow_mode,
+		read_masking,
 	output:
-		join(dirs.OUT,'kraken2','{sample}.kraken'),
-		join(dirs.OUT,'kraken2','{sample}.kreport')
+		kraken = join(dirs.OUT,'2_kraken2', 'raw_kraken', '{sample}', 'kraken.tsv'),
+		kreport = join(dirs.OUT,'2_kraken2', 'raw_kraken', '{sample}', 'kreport.tsv')
 	log:
 		join(dirs.LOG, 'kraken2', '{sample}.out'),
 	threads: 
-		config['taxthreads']
+		config['kraken2_threads'],
+	resources:
+		mem_mb = config['kraken2_mem_mb'],
 	params:
-		basename=join(dirs.OUT,'kraken2','{sample}'),
-		database=config['kraken_bracken_database_location']
+		out_dir = join(dirs.OUT, '2_kraken2', 'raw_kraken', '{sample}'),
+		database = config['kraken_bracken_database'],
+		kraken_exec = config['kraken2_executable'],
 	shell:
 		"""
-		kraken2 --db {params.database} --threads {threads} --report {params.basename}.kreport --output {params.basename}.kraken --paired {input.inputfiles}
-		"""    
+		mkdir -p {params.out_dir}
+		{params.kraken_exec} --db {params.database} --threads {threads} --report {output.kreport} --output {output.kraken} --paired {input} > {log} 2>&1
+		"""	
 
-rule run_bracken:
+
+rule bracken:
 	input:
-		kreport = join(dirs.OUT,'kraken2','{sample}.kreport')
+		join(dirs.OUT, '2_kraken2', 'raw_kraken', '{sample}', 'kreport.tsv'),
 	output:
-		join(dirs.OUT,'bracken','{sample}.species.bracken'),
-		join(dirs.OUT,'bracken','{sample}.genus.bracken'),
-		join(dirs.OUT,'bracken','{sample}.family.bracken'),
-		join(dirs.OUT,'bracken','{sample}.order.bracken'),
-		join(dirs.OUT,'bracken','{sample}.class.bracken'),
-		join(dirs.OUT,'bracken','{sample}.phylum.bracken'),
+		join(dirs.OUT, '2_kraken2', 'raw_bracken','{sample}', '{rank}.tsv'),
 	log:
-		join(dirs.LOG, 'bracken', '{sample}.out'),
+		join(dirs.LOG, 'bracken', '{sample}.{rank}.out'),
+	conda:
+		join(config['env_yamls'], 'bracken.yaml'),
 	params:
-		basename=join(dirs.OUT,'bracken','{sample}'),
-		bracken_readlength=config['bracken_readlength'],
-		database=config['kraken_bracken_database_location']
+		out_dir = join(dirs.OUT,'2_kraken2', 'raw_bracken', '{sample}'),
+		rank = lambda wildcards: '{}'.format(wildcards.rank)[:1].capitalize(),
+		read_len = config['read_len'],
+		database = config['kraken_bracken_database'],
 	shell:
 		"""
-		bracken -r {params.bracken_readlength} -d {params.database}  -l S -i {input.kreport} -o {params.basename}.species.bracken
-		bracken -r {params.bracken_readlength} -d {params.database}  -l G -i {input.kreport} -o {params.basename}.genus.bracken
-		bracken -r {params.bracken_readlength} -d {params.database}  -l F -i {input.kreport} -o {params.basename}.family.bracken
-		bracken -r {params.bracken_readlength} -d {params.database}  -l O -i {input.kreport} -o {params.basename}.order.bracken
-		bracken -r {params.bracken_readlength} -d {params.database}  -l C -i {input.kreport} -o {params.basename}.class.bracken
-		bracken -r {params.bracken_readlength} -d {params.database} -l P -i {input.kreport} -o {params.basename}.phylum.bracken
+		mkdir -p {params.out_dir}
+		bracken -r {params.read_len} -d {params.database}  -l {params.rank} -i {input} -o {output} > {log} 2>&1
 		"""
 
-rule combine_bracken:
+
+rule merge_bracken_outputs:
 	input:
-		speciesfiles = expand(join(dirs.OUT,'bracken','{sample}.species.bracken'),sample = SAMPLES),
-		genusfiles = expand(join(dirs.OUT,'bracken','{sample}.genus.bracken'),sample = SAMPLES),
-		familyfiles = expand(join(dirs.OUT,'bracken','{sample}.family.bracken'),sample = SAMPLES),
-		orderfiles = expand(join(dirs.OUT,'bracken','{sample}.order.bracken'),sample = SAMPLES),
-		classfiles = expand(join(dirs.OUT,'bracken','{sample}.class.bracken'),sample = SAMPLES),
-		phylumfiles = expand(join(dirs.OUT,'bracken','{sample}.phylum.bracken'),sample = SAMPLES),
+		lambda wildcards: expand(join(dirs.OUT, '2_kraken2', \
+			'raw_bracken','{sample}', '{rank}.tsv'), \
+			sample = SAMPLES, rank = wildcards.rank),
 	output:
-		join(dirs.OUT,'bracken','merged','merged.species.bracken.tsv'),
-		join(dirs.OUT,'bracken','merged','merged.genus.bracken.tsv'),
-		join(dirs.OUT,'bracken','merged','merged.family.bracken.tsv'),
-		join(dirs.OUT,'bracken','merged','merged.order.bracken.tsv'),
-		join(dirs.OUT,'bracken','merged','merged.class.bracken.tsv'),
-		join(dirs.OUT,'bracken','merged','merged.phylum.bracken.tsv'),
+		join(dirs.OUT, '2_kraken2', 'merged','bracken_{rank}.tsv')
+	conda:
+		join(config['env_yamls'], 'bracken.yaml'),
 	params:
-		brack_loc=join(dirs.OUT,'bracken'),
+		out_dir = join(dirs.OUT, '2_kraken2', 'merged'),
+		ext_script = join(dirs_scr, 'combine_bracken_outputs.py'),
 	shell:
 		"""
-		python2 scripts/combine_bracken_outputs.py --files {input.speciesfiles} -o {params.brack_loc}/merged/merged.species.bracken.tsv
-		python2 scripts/combine_bracken_outputs.py --files {input.genusfiles} -o {params.brack_loc}/merged/merged.genus.bracken.tsv
-		python2 scripts/combine_bracken_outputs.py --files {input.familyfiles} -o {params.brack_loc}/merged/merged.family.bracken.tsv
-		python2 scripts/combine_bracken_outputs.py --files {input.orderfiles} -o {params.brack_loc}/merged/merged.order.bracken.tsv
-		python2 scripts/combine_bracken_outputs.py --files {input.classfiles} -o {params.brack_loc}/merged/merged.class.bracken.tsv
-		python2 scripts/combine_bracken_outputs.py --files {input.phylumfiles} -o {params.brack_loc}/merged/merged.phylum.bracken.tsv
+		mkdir -p {params.out_dir}
+		python {params.ext_script} --files {input} -o {output}
 		"""
 
-### SEPARATE THIS INTO THREE MODES AND MERGE THE PARSING RULE INTO EACH OF THEM
-### FOR TESTING NEED TO FIND A DIFFERENT MOCK SAMPLE WITH VIRAL DATA, MAYBE ONE OF THOSE SHALLOW ASS LAKE SAMPLES
-### CURRENTLY IF YOU ONLY RUN ONE SAMPLE THROUGH THE PARSING SCRIPT BREAKS...
 
-rule run_xtree_bacterial:
+rule make_xtree_input:
 	input:
-		inputfiles=workflow_mode,
+		lambda wildcards: expand(join(dirs.OUT,'1_metaphlan','{sample}_{dir}.fastq'), sample = wildcards.sample, dir = ['1', '2']),
 	output:
-		join(dirs.OUT,'xtree_bacteria','{sample}.ref'),
-		join(dirs.OUT,'xtree_bacteria','{sample}.cov'),
-	log:
-		join(dirs.LOG, 'xtree', '{sample}.out'),
+		join(dirs.OUT, '3_xtree', '{sample}.fastq'),
 	threads: 
-		config['taxthreads']
-	params:
-		basename_b=join(dirs.OUT,'xtree_bacteria','{sample}'),
-		bactarcdb=config['xtree_gtdb_database_location'],
-		xtree_executable=config['xtree_executable'],
+		config['xtree_threads'],
+	resources:
+		mem_mb = config['xtree_mem_mb'],
 	shell:
 		"""
-		cat {input.inputfiles} | {params.xtree_executable} --seqs - --threads {threads} --db {params.bactarcdb} --ref-out {params.basename_b}.ref --cov-out {params.basename_b}.cov --redistribute
-		"""    
+		cat {input} > {output}
+		"""
 
-rule run_xtree_viral:
+
+rule xtree:
 	input:
-		inputfiles=workflow_mode,
+		join(dirs.OUT, '3_xtree', '{xtree_group}'),
+		fq = join(dirs.OUT, '3_xtree', '{sample}.fastq'),
 	output:
-		join(dirs.OUT,'xtree_viral','{sample}.ref'),
-		join(dirs.OUT,'xtree_viral','{sample}.cov'),
+		ref = join(dirs.OUT, '3_xtree', '{xtree_group}','{sample}.ref'),
+		cov = join(dirs.OUT, '3_xtree', '{xtree_group}','{sample}.cov'),
 	log:
-		join(dirs.LOG, 'xtree', '{sample}.out'),
+		join(dirs.LOG, 'xtree', '{sample}.{xtree_group}.out'),
 	threads: 
-		config['taxthreads']
+		config['xtree_threads'],
+	resources:
+		mem_mb = config['xtree_mem_mb'],
 	params:
-		basename_v=join(dirs.OUT,'xtree_viral','{sample}'),
-		viraldb=config['xtree_viral_database_location'],
-		xtree_executable=config['xtree_executable'],
+		out_dir = join(dirs.OUT, '3_xtree', '{xtree_group}'),
+		ext_script = join(dirs_scr, 'run_xtree.sh'),
+		xtree_exec = config['xtree_executable'],
+		db = lambda wildcards: config['xtree_{}_database'.format(wildcards.xtree_group)],
+		prefix = join(dirs.OUT, '3_xtree', '{xtree_group}','{sample}'),
 	shell:
 		"""
-		cat {input.inputfiles} | {params.xtree_executable} --seqs - --threads {threads} --db {params.viraldb} --ref-out {params.basename_v}.ref --cov-out {params.basename_v}.cov --redistribute
-		"""    
+		cd {params.out_dir}
+		{params.ext_script} {params.xtree_exec} {threads} {input.fq} {params.db} {params.prefix} > {log} 2>&1
+		"""	
+# {params.xtree_exec} --seqs {input.fq} --threads {threads} --db {params.db} --ref-out {output.ref} --cov-out {output.cov} --redistribute > {log} 2>&1
 
-rule run_xtree_fungi_protozoa:
-	input:
-		inputfiles=workflow_mode,
-	output:
-		join(dirs.OUT,'xtree_protozoa_fungi','{sample}.ref'),
-		join(dirs.OUT,'xtree_protozoa_fungi','{sample}.cov'),
-	log:
-		join(dirs.LOG, 'xtree', '{sample}.out'),
-	threads: 
-		config['taxthreads']
-	params:
-		basename_fp=join(dirs.OUT,'xtree_protozoa_fungi','{sample}'),
-		protfundb=config['xtree_fungiprotozoa_database_location'],
-		xtree_executable=config['xtree_executable'],
-	shell:
-		"""
-		cat {input.inputfiles} | {params.xtree_executable} --seqs - --threads {threads} --db {params.protfundb} --ref-out {params.basename_fp}.ref --cov-out {params.basename_fp}.cov --redistribute
-		"""    
 
-rule parse_xtree_output_bacarc:
+rule merge_xtree_outputs:
 	input:
-		expand(join(dirs.OUT,'xtree_bacteria','{sample}.cov'),sample=SAMPLES),
-		expand(join(dirs.OUT,'xtree_viral','{sample}.cov'),sample=SAMPLES),
-		expand(join(dirs.OUT,'xtree_protozoa_fungi','{sample}.cov'),sample=SAMPLES),
+		lambda wildcards: expand(join(dirs.OUT, '3_xtree', '{xtree_group}', '{sample}.cov'), xtree_group = wildcards.xtree_group, sample = SAMPLES),
 	output:
-		join(dirs.OUT,'xtree_merged','xtree_bacterial_archaeal_counts.tsv'),
-		join(dirs.OUT,'xtree_merged','xtree_bacterial_archaeal_counts_raw.tsv'),
-		join(dirs.OUT,'xtree_merged','xtree_bacterial_archaeal_ra.tsv'),
-		join(dirs.OUT,'xtree_merged','xtree_bacterial_archaeal_ra_raw.tsv'),
-		join(dirs.OUT,'xtree_merged','xtree_bacterial_archaeal_coverages.tsv'),
-		join(dirs.OUT,'xtree_merged','xtree_bacterial_archaeal_unique_coverages.tsv'),
-	log:
-		join(dirs.LOG, 'xtree', 'merging.out'),
-	threads: 
-		config['taxthreads'],
+		expand(join(dirs.OUT, '3_xtree', 'merged', 'xtree_{{xtree_group}}_{out_type}.tsv'), out_type = ['counts', 'counts_raw', 'ra', 'ra_raw', 'coverages', 'unique_coverages'])
 	params:
-		outdir = join(dirs.OUT,'xtree_merged'),
-		xtree_bac = join(dirs.OUT,'xtree_bacteria'),
-		hthresh_bac = config['hthresh_bac'],
-		uthresh_bac = config['uthresh_bac'],
-		thresh_bac = config['thresh_bac'],
-		mappingfile_loc = config['mappingfile_loc']
+		ext_script = join(dirs_scr, 'post_process_xtree.R'),
+		indir = join(dirs.OUT, '3_xtree', '{xtree_group}'),
+		xtree_group = '{xtree_group}',
+		out_dir = join(dirs.OUT,'3_xtree', 'merged'),
+		thresh = config['thresh'],
+		hthresh = config['hthresh'],
+		uthresh = config['uthresh'],
+		mappings = join(dirs_ext, 'xtree_all_db_mapping'),
 	shell: 
 		"""
-		Rscript scripts/post_process_xtree.R {params.xtree_bac} {params.thresh_bac} {params.hthresh_bac} {params.uthresh_bac} {params.outdir} bacterial_archaeal {params.mappingfile_loc}
+		mkdir -p {params.out_dir}
+		Rscript {params.ext_script} {params.indir} {params.thresh} {params.hthresh} {params.uthresh} {params.out_dir} {params.xtree_group} {params.mappings}
 		"""
 
-rule parse_xtree_output_viral:
-	input:
-		expand(join(dirs.OUT,'xtree_viral','{sample}.cov'),sample=SAMPLES),
-	output:
-		join(dirs.OUT,'xtree_merged','xtree_viral_counts.tsv'),
-		join(dirs.OUT,'xtree_merged','xtree_viral_counts_raw.tsv'),
-		join(dirs.OUT,'xtree_merged','xtree_viral_ra.tsv'),
-		join(dirs.OUT,'xtree_merged','xtree_viral_ra_raw.tsv'),
-		join(dirs.OUT,'xtree_merged','xtree_viral_coverages.tsv'),
-		join(dirs.OUT,'xtree_merged','xtree_viral_unique_coverages.tsv'),
-	log:
-		join(dirs.LOG, 'xtree', 'merging.out'),
-	threads: 
-		config['taxthreads'],
-	params:
-		outdir = join(dirs.OUT,'xtree_merged'),
-		xtree_viral = join(dirs.OUT,'xtree_viral'),
-		hthresh_viral = config['hthresh_viral'],
-		uthresh_viral = config['uthresh_viral'],
-		thresh_viral = config['thresh_viral'],
-		mappingfile_loc = config['mappingfile_loc']
-	shell: 
-		"""
-		Rscript scripts/post_process_xtree.R {params.xtree_viral} {params.thresh_viral} {params.hthresh_viral} {params.uthresh_viral} {params.outdir} viral {params.mappingfile_loc}
-		"""
-
-
-rule parse_xtree_output_funprot:
-	input:
-		expand(join(dirs.OUT,'xtree_protozoa_fungi','{sample}.cov'),sample=SAMPLES),
-	output:
-		join(dirs.OUT,'xtree_merged','xtree_protozoa_fungi_counts.tsv'),
-		join(dirs.OUT,'xtree_merged','xtree_protozoa_fungi_counts_raw.tsv'),
-		join(dirs.OUT,'xtree_merged','xtree_protozoa_fungi_ra.tsv'),
-		join(dirs.OUT,'xtree_merged','xtree_protozoa_fungi_ra_raw.tsv'),
-		join(dirs.OUT,'xtree_merged','xtree_protozoa_fungi_coverages.tsv'),
-		join(dirs.OUT,'xtree_merged','xtree_protozoa_fungi_unique_coverages.tsv'),
-	log:
-		join(dirs.LOG, 'xtree', 'merging.out'),
-	threads: 
-		config['taxthreads'],
-	params:
-		outdir = join(dirs.OUT,'xtree_merged'),
-		xtree_protozoafungi = join(dirs.OUT,'xtree_protozoa_fungi'),
-		hthresh_fungprot = config['hthresh_fungprot'],
-		uthresh_fungprot = config['uthresh_fungprot'],
-		thresh_fungprot = config['thresh_fungprot'],
-		mappingfile_loc = config['mappingfile_loc']
-	shell: 
-		"""
-		Rscript scripts/post_process_xtree.R {params.xtree_protozoafungi} {params.thresh_fungprot} {params.hthresh_fungprot} {params.uthresh_fungprot} {params.outdir} protozoa_fungi {params.mappingfile_loc}
-		"""
 
 rule make_config:
 	input:
-		workflow_output
+		workflow_mode,
 	output:
-		join(dirs.OUT,'samples.csv')
+		join(dirs.OUT, 'final_reports', 'complete.txt')
+	params:
+		out_dir = join(dirs.OUT, 'final_reports'),
 	run:
 		out = []
 		for i in input:
-			if 'MetaPhlAn3' in i:
-				classifiertype='MetaPhlAn3'
-			if 'bracken' in i:
-				classifiertype='kraken2'
-			if 'xtree' in i:
-				classifiertype='xtree'
-			out.append([classifiertype,i,config['mask']])
-		df = pd.DataFrame(out)
-		df.columns = ['classifier_type','location','mask_status']
-		df.to_csv(str(output), index = False)
-
-
+			copy(str(i), join(params.out_dir, basename(i)))
+		open(str(output), 'a').close()
 
 
 
