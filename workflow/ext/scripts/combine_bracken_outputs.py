@@ -110,7 +110,7 @@ def main():
                 sample_counts[name] = {}
                 sample_counts[name][taxid] = {}
             elif taxid != list(sample_counts[name].keys())[0]:
-                sys.exit("Taxonomy IDs not matching for species %s: (%s\t%s)" % (name, taxid, sample_counts[name].keys()[0]))
+                sys.exit("Taxonomy IDs not matching for species %s: (%s\t%s)" % (name, taxid, list(sample_counts[name].keys())[0]))
             if len(level) == 0:
                 level = taxlvl 
             elif level != taxlvl:
