@@ -13,7 +13,7 @@ import shutil
 
 
 def ingest_samples(samples, tmp):
-    df = pd.read_csv(samples, header = 0, index_col = 0) 
+    df = pd.read_csv(samples, header = 0, index_col = 0) # name, fwd, rev
     s = list(df.index)
     lst = df.values.tolist()
     for i,l in enumerate(lst):
