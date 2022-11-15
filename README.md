@@ -47,9 +47,11 @@ Running each CAMP module takes the same three steps, listed below.
 
 <SAMPLES.CSV FORMAT>
 
-3. Deploy!
+3. Deploy! You can try this example command from the camp_short-read-taxonomy repo:
 
-<SNAKEMAKE COMMAND>
+```
+python workflow/short-read-taxonomy.py -d testrun -s configs/samples.csv
+```
 
 Module details
 ---------------
