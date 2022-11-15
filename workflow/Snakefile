@@ -5,7 +5,7 @@ from contextlib import redirect_stderr
 import os
 from os.path import abspath, basename, dirname, exists, join
 import pandas as pd
-from shutil import copy
+import shutil
 from utils import Workflow_Dirs, ingest_samples, scrub_fastq_captions
 
 
@@ -266,7 +266,7 @@ rule make_config:
 	run:
 		out = []
 		for i in input:
-			copy(str(i), join(params.out_dir, basename(i)))
+			shutil.copy(str(i), join(params.out_dir, basename(i)))
 		open(str(output), 'a').close()
 
 
