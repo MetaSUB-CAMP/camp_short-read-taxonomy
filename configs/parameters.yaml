@@ -3,7 +3,7 @@
 
 # --- general --- #
 
-ext: "/home/lam4003/bin/camp_short-read-taxonomy/workflow/ext"
+ext: "~/bin/camp_short-read-taxonomy/workflow/ext"
 mask: False 
 metaphlan: True 
 kraken2: False 
