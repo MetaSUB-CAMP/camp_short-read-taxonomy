@@ -28,6 +28,25 @@ conda env create -f configs/conda/short-read-taxonomy.yaml
 conda activate short-read-taxonomy
 ```
 
+3. Download the databases for the taxonomic pipelines you want to use. Be sure to update the locations of the dbs in the parameters.yaml file. This may take a few hours -- protip, if you want to speed up downloading, trying installing ``axel`` and replacing the ``wget`` with ``axel -a``!
+
+For MetaPhlAn4:
+
+```
+wget https://s3.us-east-1.wasabisys.com/camp-databases/v0.1.1/taxonomy/metaphlan_20220926.tar.gz; tar -zxvf metaphlan_20220926.tar.gz
+```
+For Kraken2:
+
+```
+wget https://s3.us-east-1.wasabisys.com/camp-databases/v0.1.1/taxonomy/Kraken2.tar.gz; tar -zxvf Kraken2.tar.gz
+```
+
+for xtree:
+
+```
+XXXXX
+```
+
 3. Make sure the installed pipeline works correctly. ``pytest`` only generates temporary outputs so no files should be created.
 
 ```
