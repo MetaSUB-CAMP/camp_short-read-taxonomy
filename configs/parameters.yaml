@@ -20,7 +20,7 @@ metaphlan_database: "~/bin/databases/metaphlan_20220926"
 # --- kraken2/bracken --- #
 
 kraken_bracken_database: "~/bin/databases/Kraken2"
-kraken2_executable: "~/bin/kraken2"
+kraken2_executable: "~/bin/kraken2/kraken2"
 read_len: 150
 
 
