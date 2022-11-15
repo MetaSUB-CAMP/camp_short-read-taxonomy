@@ -44,7 +44,7 @@ wget https://s3.us-east-1.wasabisys.com/camp-databases/v0.1.1/taxonomy/Kraken2.t
 for xtree:
 
 ```
-XXXXX
+wget https://s3.us-east-1.wasabisys.com/camp-databases/v0.1.1/orfcalling/xtree_db_gtdb207_kmer29_comp2_20220722.tar.gz
 ```
 
 3. Make sure the installed pipeline works correctly. ``pytest`` only generates temporary outputs so no files should be created.
