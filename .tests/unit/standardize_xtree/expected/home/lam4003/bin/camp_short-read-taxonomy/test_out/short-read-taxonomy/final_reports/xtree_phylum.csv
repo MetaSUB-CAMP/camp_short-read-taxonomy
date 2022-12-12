@@ -1,0 +1,8 @@
+classifier,clade,tax_id,zymo_pos_ctrl
+xtree,Actinobacteriota,201174,0.0325117986366018
+xtree,Bacteroidota,976,0.4053487152595699
+xtree,Firmicutes,1239,0.0146827477713682
+xtree,Firmicutes A,NaN,0.019926586261143
+xtree,Firmicutes B,NaN,0.51232302045097
+xtree,Proteobacteria,1224,0.0146827477713682
+xtree,Verrucomicrobiota,74201,0.0005243838489774

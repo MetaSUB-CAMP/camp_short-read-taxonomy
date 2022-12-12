@@ -1,0 +1,3 @@
+classifier,clade,tax_id,zymo_pos_ctrl
+kraken_bracken,Xanthomonas euvesicatoria,456327,0.92416
+kraken_bracken,Plasmodium relictum,85471,0.07584

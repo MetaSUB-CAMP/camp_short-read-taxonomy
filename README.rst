@@ -96,14 +96,7 @@ Using the Module
         -s /path/to/samples.csv
     EOF
 
-6. Because XTree writes the intermediate file ``DbgPost.txt`` to the work directory which is shared by all runs (samples and taxonomic groups), the XTree rules cannot actually be used in their current states. As such, the paths to the scripts, XTree, and the databases need to be updated in the scripts ``submit_xtree.sh, run_xtree.sh, merge_xtree.sh`` in ``workflow/ext/scripts`` 
-
-7. Then, the commands need to be run separately as follows:
-::
-    /path/to/camp_short-read-taxonomy/workflow/dirs/scripts/submit_xtree.sh sample_1,...,sample_n bacterial_archaeal,protozoa_fungi,viral /path/to/work/dir
-    /path/to/camp_short-read-taxonomy/workflow/dirs/scripts/merge_xtree.sh bacterial_archaeal,protozoa_fungi,viral /path/to/work/dir
-
-8. After checking over ``final_reports/`` and making sure you have everything you need, you can delete all intermediate files to save space. 
+6. After checking over ``final_reports/`` and making sure you have everything you need, you can delete all intermediate files to save space. 
 ::
 
     python3 /path/to/camp_short-read-taxonomy/workflow/short-read-taxonomy.py \
@@ -111,7 +104,7 @@ Using the Module
         -d /path/to/work/dir \
         -s /path/to/samples.csv
 
-9. If for some reason the module keeps failing, CAMP can print a script containing all of the remaining commands that can be run manually. 
+7. If for some reason the module keeps failing, CAMP can print a script containing all of the remaining commands that can be run manually. 
 ::
 
     python3 /path/to/camp_short-read-taxonomy/workflow/short-read-taxonomy.py \
@@ -120,6 +113,13 @@ Using the Module
         -s /path/to/samples.csv > cmds.txt
     python3 /path/to/camp_short-read-taxonomy/workflow/short-read-taxonomy.py \
         commands cmds.txt
+
+8. To plot grouped bar graph(s) of the sample alpha and beta diversities remaining after each quality control step in each sample, set up the dataviz environment and follow the instructions in the Jupyter notebook:
+::
+    conda env create -f configs/conda/dataviz.yaml
+    conda activate dataviz
+    jupyter notebook &
+
 
 Extending the Module
 --------------------

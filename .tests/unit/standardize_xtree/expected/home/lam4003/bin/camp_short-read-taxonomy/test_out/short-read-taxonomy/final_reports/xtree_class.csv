@@ -1,0 +1,10 @@
+classifier,clade,tax_id,zymo_pos_ctrl
+xtree,Actinomycetia,1760,0.0325117986366018
+xtree,Alphaproteobacteria,28211,0.0036706869428419996
+xtree,Bacilli,91061,0.0146827477713682
+xtree,Bacteroidia,200643,0.4053487152595699
+xtree,Clostridia,186801,0.019926586261143
+xtree,Dehalobacteriia,NaN,0.469323544834819
+xtree,Gammaproteobacteria,1236,0.0110120608285262
+xtree,Moorellia,NaN,0.042999475616151
+xtree,Verrucomicrobiae,203494,0.0005243838489774

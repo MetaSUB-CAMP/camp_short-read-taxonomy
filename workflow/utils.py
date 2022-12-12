@@ -23,6 +23,11 @@ def ingest_samples(samples, tmp):
     return s
 
 
+def check_make(d):
+    if not exists(d):
+        makedirs(d)
+
+
 class Workflow_Dirs:
     '''Management of the working directory tree.'''
     OUT = ''
@@ -33,22 +38,18 @@ class Workflow_Dirs:
         self.OUT = join(work_dir, module)
         self.TMP = join(work_dir, 'tmp') 
         self.LOG = join(work_dir, 'logs') 
-        if not exists(self.OUT):
-            makedirs(self.OUT)
-            makedirs(join(self.OUT, '0_masked_fastqs'))            
-            makedirs(join(self.OUT, '1_metaphlan'))            
-            makedirs(join(self.OUT, '2_kraken2'))            
-            makedirs(join(self.OUT, '3_xtree'))            
-            makedirs(join(self.OUT, 'final_reports'))            
-        if not exists(self.TMP):
-            makedirs(self.TMP)
-        if not exists(self.LOG):
-            makedirs(self.LOG)
-            makedirs(join(self.LOG, 'masking'))            
-            makedirs(join(self.LOG, 'metaphlan'))            
-            makedirs(join(self.LOG, 'kraken2'))            
-            makedirs(join(self.LOG, 'bracken'))            
-            makedirs(join(self.LOG, 'xtree'))            
+        check_make(self.OUT)
+        out_dirs = ['0_masked_fastqs', '1_metaphlan', '2_kraken2', '3_xtree', 'final_reports']
+        for d in out_dirs: 
+            check_make(join(self.OUT, d))
+        check_make(join(self.OUT,'1_metaphlan','raw_output'))
+        check_make(join(self.OUT, '3_xtree', 'merged'))
+        check_make(join(self.OUT, 'final_reports', 'unclassified'))
+        check_make(self.TMP)
+        check_make(self.LOG)
+        log_dirs = ['masking', 'metaphlan', 'kraken2', 'bracken', 'xtree']       
+        for d in log_dirs: 
+            check_make(join(self.LOG, d))
 
 
 def cleanup_files(work_dir, df):
@@ -97,3 +98,152 @@ def scrub_fastq_captions(fi, fo):
                 f_out.write('+\n')
             else:
                 f_out.write(l)
+
+
+def reformat_row_meta(row): 
+    # Reshape into [rank, metaphlan, clade, second_elem, third_elem]
+    clade_lst = row[0].split('|')
+    raw_clade = clade_lst[-2] if 't__' in clade_lst[-1] else clade_lst[-1] # Pick the lowest clade unless strain present, in which case pick species
+    if 'unclassified' in raw_clade:
+        rank = 'u'
+        clade = 'unclassified'
+        tax_id = -1
+    else:
+        raw_clade_lst = raw_clade.split('__')
+        rank = raw_clade_lst[0]
+        clade = raw_clade_lst[1].replace('_', ' ')
+        tax_id_lst = row[1].split('|')
+        tax_id = tax_id_lst[-2] if rank == 't' else tax_id_lst[-1] # Like the above, pick the lowest clade's taxID
+    return [rank, 'metaphlan', clade, tax_id, row[2]/ 100.0]
+        # MetaPhlan4 outputs the percentage numerator instead of decimals
+
+
+# Process single-sample MetaPhlan reports into single-sample unified format report
+# In:   #clade_name     NCBI_tax_id     relative_abundance      additional_species
+# In:   k__Bacteria|p__Bacteroidetes    2|976   71.60402
+# Out:  classifier,clade,taxid,sample_X_ra
+def standardize_metaphlan(fi, out_dir):
+    raw_df = pd.read_csv(fi, sep = '\t', skiprows = 5, header = 0, index_col = None)
+    sample = basename(fi).split('.')[0]
+    out_lst = list(raw_df.apply(lambda row : reformat_row_meta(row), axis = 1))
+    basic_cols = ['classifier', 'clade', 'tax_id']
+    out_df = pd.DataFrame(out_lst, columns = ['rank'] + basic_cols + [sample])
+    for r, rank in { 's' : 'species', 'g' : 'genus', 'f' : 'family', 'o' : 'order', 'c' : 'class', 'p' : 'phylum'}.items():
+        sub_df = out_df[out_df.iloc[:,0] == r]
+        if sub_df.empty:
+            agg_df = sub_df
+        else:
+            sub_df.drop(columns = sub_df.columns[0], axis = 1, inplace = True) # Get rid of rank column
+            agg_dct = {}
+            agg_dct[sample] = 'sum'
+            for c in basic_cols:
+                agg_dct[c] = 'first'
+            agg_df = sub_df.groupby(sub_df['clade']).aggregate(agg_dct)
+            agg_df.reset_index(inplace = True, drop = True)
+            agg_df = agg_df[basic_cols + [sample]]
+        agg_df.to_csv(join(out_dir, sample + '_' + rank + '.csv'), header = True, index = False)
+
+
+# Process single-sample Bracken reports into single-sample unified format report
+# In: name    taxonomy_id     taxonomy_lvl    kraken_assigned_reads   added_reads new_est_reads   fraction_total_reads
+# Out:  classifier,classification,taxid,sample_1_ra,sample_2_ra,sample_3_ra
+def standardize_bracken(fi, out_dir):
+    raw_df = pd.read_csv(fi, sep = '\t', header = 0, index_col = None)
+    abs_path = fi.split('/')
+    sample = abs_path[-2]
+    rank = abs_path[-1].split('.')[0]
+    raw_df['classifier'] = 'kraken_bracken'
+    pruned_df = raw_df[['classifier', 'name', 'taxonomy_id', 'fraction_total_reads']]
+    pruned_df.columns = ['classifier', 'clade', 'tax_id', sample]
+    pruned_df.to_csv(join(out_dir, sample + '_' + rank + '.csv'), header = True, index = False)
+
+
+def load_taxid(ncbi_taxid):
+    n2i_df = pd.read_csv(ncbi_taxid, sep = "\t|\t", header = None, index_col = None)
+    pruned_df = n2i_df.iloc[:,[0,2]]
+    pruned_df.set_index(2, inplace = True)
+    return {i : row for i, row in pruned_df.iterrows()} # This takes a long time
+
+
+def reformat_row_xtree(row, n2i_dct, rank):
+    # Reshape into [rank, xtree, clade, sample_1_ra,...,sample_n_ra]
+    raw_clade = 'NaN'
+    for c in row[0].split(';'):
+        if rank + '__' in c:
+            raw_clade = c
+    if raw_clade == 'NaN':
+        return
+    raw_clade_lst = raw_clade.split('__')
+    clade = raw_clade_lst[1].replace('_', ' ')
+    tax_id = n2i_dct[clade][0] if clade in n2i_dct else 'NaN'
+    new_row = ['xtree', clade, tax_id]
+    new_row.extend(row[1:])
+    return new_row
+
+
+# Process merged XTree reports into merged unified format report
+# In: NA    Xsample_1        Xsample_2        Xsample_3
+# Out:  classifier,classification,taxid,sample_1_ra,sample_2_ra,sample_3_ra
+def standardize_xtree(fi, out_dir, ncbi_taxid, uthresh):
+    n2i_dct = load_taxid(ncbi_taxid)
+    raw_df = pd.read_csv(fi, sep = '\t', header = 0, index_col = None)
+    raw_df.reset_index(inplace = True)
+    basic_cols = ['classifier', 'clade', 'tax_id']
+    sample_names = [s.replace('X', '') for s in raw_df.columns[1:]]
+    column_names = basic_cols + sample_names # 1 | all)
+    for r, rank in { 's' : 'species', 'g' : 'genus', 'f' : 'family', 'o' : 'order', 'c' : 'class', 'p' : 'phylum'}.items():
+        out_lst = list(raw_df.apply(lambda row : reformat_row_xtree(row, n2i_dct, r), axis = 1))
+        filt_lst = [x for x in out_lst if x is not None]
+        filt_df = pd.DataFrame(filt_lst, columns = column_names)
+        filt_df.columns = column_names
+        if r == 's':
+            out_df = filt_df
+        else:
+            agg_dct = {}
+            for c in basic_cols:
+                agg_dct[c] = 'first'
+            for c in sample_names:
+                agg_dct[c] = 'sum'
+            out_df = filt_df.groupby(filt_df['clade']).aggregate(agg_dct)
+        out_df.reset_index(inplace = True, drop = True)
+        out_df.mask(out_df[sample_names] < uthresh, inplace = True)
+        out_df.dropna(axis = 0, how = 'all', subset = sample_names, inplace = True)
+        for s in sample_names:
+            out_df[s] = out_df[s].fillna(0)
+        out_df.to_csv(join(out_dir, 'xtree_' + rank + '.csv'), header = True, index = False)
+
+
+def concat_tbls(sample_lst, fo):
+    s_lst = []
+    tmp_colnames = []
+    sample_names = []
+    if len(sample_lst) == 1:
+        shutil.copy(sample_lst[0], fo)
+    else:
+        for i,s in enumerate(sample_lst):
+            df = pd.read_csv(s, header = 0)
+            s_lst.append(df)
+            sample = df.columns[-1]
+            sample_names.append(sample)
+            if i < len(sample_lst) - 1:
+                tmp_colnames.extend(['tmp', 'tmp', 'tmp', sample])
+            else:
+                tmp_colnames.extend(df.columns)
+        df = pd.concat(s_lst, axis = 1, join = 'outer')
+        df.columns = tmp_colnames
+        df.drop(columns = 'tmp', axis = 1, inplace = True) # Get rid of all but the last set of 'classifier, clade, tax_id'
+        df = df[['classifier', 'clade', 'tax_id'] + sample_names]
+        df.fillna(0)
+        df.to_csv(fo, header = True, index = False)
+
+
+def extract_unclassified_names(fi, fo):
+    df = pd.read_csv(fi, sep = '\t', header = None, index_col = None)
+    unc_reads = list(df[df[0] == 'U'][1])
+    with open(fo, 'w') as f_out:
+        for r in unc_reads:
+            f_out.write(r + '\n')
+
+
+
+
