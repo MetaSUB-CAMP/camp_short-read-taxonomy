@@ -5,7 +5,7 @@
 
 ext: ''
 mask: False 
-metaphlan: True 
+metaphlan: False 
 kraken2: True 
 # xtree kingdom options: bacterial_archaeal, viral, protozoa_fungi
 # Separate options on one line with commas (ex. viral,protozoa_fungi)
