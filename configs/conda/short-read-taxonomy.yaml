@@ -244,4 +244,3 @@ dependencies:
   - zipp=3.8.0=pyhd8ed1ab_0
   - zlib=1.2.12=h166bdaf_1
   - zstd=1.5.2=h6239696_4
-prefix: /home/lam4003/bin/anaconda3/envs/short-read-taxonomy

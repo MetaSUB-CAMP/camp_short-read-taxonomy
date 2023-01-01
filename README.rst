@@ -24,26 +24,50 @@ Installation
 
 2. Set up the conda environment (contains, Snakemake) using ``configs/conda/short-read-taxonomy.yaml``. 
 
-3. XTree needs to be installed from Github directly with the following commands. After installation, the location of the executable needs to be added to ``configs/parameters.yaml`` under ``xtree_executable``.
-::
-    git clone https://github.com/GabeAl/UTree.git
-    cd UTree/
-    gcc -std=gnu11 -m64 -O3 itree.c -fopenmp -D BUILD -o utree-build 
-    gcc -std=gnu11 -m64 -O3 itree.c -fopenmp -D COMPRESS -o xtree-compress 
-    gcc -std=gnu11 -m64 -O3 itree.c -fopenmp -D SEARCH -o xtree-search
-
-4. Kraken2 also needs to be installed separately despite having an environment because, like Bowtie2, it frequently misbehaves. 
+3. Kraken2 needs to be installed from Github directly and separately despite having an environment because, like Bowtie2, it frequently misbehaves. 
 ::
     git clone https://github.com/DerrickWood/kraken2.git
     cd kraken2/
     ./install_kraken2.sh ./
 
-5. Make sure the installed pipeline works correctly. ``pytest`` only generates temporary outputs so no files should be created.
+4. XTree also needs to be installed from Github directly with the following commands. After installation, the location of the executable (called ``xtree``, needs to ``chmod``-ed) needs to be added to ``configs/parameters.yaml`` under ``xtree_executable``.
+
+5. The Metaphlan4 database can be downloaded to a central database folder using one of two options:
 ::
+    # Option 1: Using MetaPhlan4
+    metaphlan --install --bowtie2db /path/to/Databases/Metaphlan4_29122022
+    # Option 2: Manually
+    wget http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/mpa_vJan21_CHOCOPhlAnSGB_202103.tar &
+    wget http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/mpa_vJan21_CHOCOPhlAnSGB_202103.md5 &
+    wget http://cmprod1.cibio.unitn.it/biobakery4/metaphlan_databases/mpa_latest &
+
+6. The Kraken2 database also needs to be downloaded to a database folder. However, as of 29/12/2022, NCBI made changes to their FTP links such that some of ``kraken2-build``'s internals don't work. Instead, download a pre-built `database <https://benlangmead.github.io/aws-indexes/k2>`_ from:
+::
+    mkdir -p Kraken2_29122022/Prebuilt_09122022/
+    cd Kraken2_29122022/Prebuilt_09122022/
+    wget https://genome-idx.s3.amazonaws.com/kraken/k2_standard_20221209.tar.gz
+    tar -xf k2_standard_20221209.tar.gz
+
+7. The NCBI Taxonomy database's pairing of names to accession IDs was downloaded along with the Kraken2 database. It can be found at ``/path/to/Databases/Kraken2_29122022/taxonomy/names.dmp``.
+
+8. The XTree databases also need to be downloaded to a database folder. Details TBD.
+
+9. Update the locations of the test datasets in ``samples.csv``, and the relevant parameters in ``configs/parameters.yaml``.
+
+10. Make sure the installed pipeline works correctly. 
+::
+    # Create and activate conda environment 
     cd camp_short-read-taxonomy
-    conda env create -f configs/conda/camp_short-read-taxonomy.yaml
-    conda activate camp_short-read-taxonomy
-    pytest .tests/unit/
+    conda env create -f configs/conda/short-read-taxonomy.yaml
+    conda activate short-read-taxonomy
+    # Run tests on the included sample dataset
+    python /path/to/camp_short-read-taxonomy/workflow/short-read-taxonomy.py \
+    -d /path/to/camp_short-read-taxonomy/test_out \
+    -s /path/to/camp_short-read-taxonomy/test_data/samples.csv \
+    -p /path/to/camp_short-read-taxonomy/test_data/parameters.yaml \
+    -r /path/to/camp_short-read-taxonomy/test_data/resources.yaml \
+    --cores 20
+
 
 Using the Module
 ----------------
@@ -61,11 +85,11 @@ Using the Module
         ├── short-read-taxonomy.py
         ├── utils.py
         └── __init__.py
-- ``workflow/short-read-taxonomy.py``: Click-based CLI that wraps the ``snakemake`` and unit test generation commands for clean management of parameters, resources, and environment variables.
+- ``workflow/short-read-taxonomy.py``: Click-based CLI that wraps the ``snakemake`` and other commands for clean management of parameters, resources, and environment variables.
 - ``workflow/Snakefile``: The ``snakemake`` pipeline. 
 - ``workflow/utils.py``: Sample ingestion and work directory setup functions, and other utility functions used in the pipeline and the CLI.
 
-1. Make your own ``samples.csv`` based on the template in ``configs/samples.csv``. Sample test data can be found in ``test_data/``.
+1. Make your own ``samples.csv`` based on the template in ``configs/samples.csv``.
     - ``samples.csv`` requires either absolute paths or paths relative to the directory that the module is being run in
     - Note: Metaphlan and Bracken merge outputs from all samples to get aggregated relative abundances across all samples. To get relative abundances for a single sample, put each sample in its own ``samples.csv``.
 
@@ -120,6 +144,14 @@ Using the Module
     conda activate dataviz
     jupyter notebook &
 
+Updating the Module
+--------------------
+
+What if you've customized some components of the module, but you still want to update the rest of the module with latest version of the standard CAMP? Just do the following from within the module's home directory:
+    - The flag with the setting ``-X ours`` forces conflicting hunks to be auto-resolved cleanly by favoring the local (i.e.: your) version.
+::
+    cd /path/to/camp_short-read-taxonomy
+    git pull -X ours
 
 Extending the Module
 --------------------
@@ -138,13 +170,8 @@ These instructions are meant for developers who have made a tool and want to int
 3. If applicable, update the default conda config using ``conda env export > config/conda/short-read-taxonomy.yaml`` with your tool and its dependencies. 
     - If there are dependency conflicts, make a new conda YAML under ``configs/conda`` and specify its usage in specific rules using the ``conda`` option (see ``first_rule`` for an example).
 4. Add your tool's installation and running instructions to the module documentation and (if applicable) add the repo to your `Read the Docs account <https://readthedocs.org/>`_ + turn on the Read the Docs service hook.
-5. Run the pipeline once through to make sure everything works using the test data in ``test_data/`` if appropriate, or your own appropriately-sized test data. Then, generate unit tests to ensure that others can sanity-check their installations.
+5. Run the pipeline once through to make sure everything works using the test data in ``test_data/`` if appropriate, or your own appropriately-sized test data. 
     * Note: Python functions imported from ``utils.py`` into ``Snakefile`` should be debugged on the command-line first before being added to a rule because Snakemake doesn't port standard output/error well when using ``run:``.
-::
-    python3 /path/to/camp_short-read-taxonomy/workflow/short-read-taxonomy.py \
-        --unit_test \
-        -d /path/to/work/dir \
-        -s /path/to/samples.csv
 
 6. Increment the version number of the modular pipeline.
 ::

@@ -55,7 +55,6 @@ def workflow_mode(wildcards):
 			sample = SAMPLES, dir = FQ_DIRS)),
 	if config['xtree']:
 		XTREE = [g.strip() for g in config['xtree'].split(',')]
-
 		for g in XTREE:
 			out_dir = join(dirs.OUT, '3_xtree', g)
 			if not exists(out_dir):
@@ -143,10 +142,11 @@ rule standardize_metaphlan:
 		join(dirs.OUT, '1_metaphlan', 'standardized', '{sample}_phylum.csv'),
 	params:
 		out_dir = join(dirs.OUT,'1_metaphlan','standardized'),
+		min_abd = config['min_rel_abund'],
 	run:
 		if not exists(str(params.out_dir)):
-			makedirs(str(params.out_dir))
-		standardize_metaphlan(str(input), str(params.out_dir))
+			os.makedirs(str(params.out_dir))
+		standardize_metaphlan(str(input), str(params.out_dir), int(params.min_abd))
 # lambda wildcards: expand(join(dirs.OUT,'1_metaphlan', 'standardized', '{sample}_{rank}.csv'), sample = wildcards.sample, rank = RANKS),
 
 
@@ -231,10 +231,11 @@ rule standardize_bracken:
 		join(dirs.OUT, '2_kraken2', 'standardized', '{sample}_{rank}.csv'),
 	params:
 		out_dir = join(dirs.OUT, '2_kraken2', 'standardized'),
+		min_abd = config['min_rel_abund'],		
 	run:
 		if not exists(str(params.out_dir)):
-			makedirs(str(params.out_dir))
-		standardize_bracken(str(input), str(params.out_dir))
+			os.makedirs(str(params.out_dir))
+		standardize_bracken(str(input), str(params.out_dir), int(params.min_abd))
 
 
 rule merge_bracken:
@@ -288,7 +289,6 @@ rule make_xtree_input:
 
 rule xtree:
 	input:
-		join(dirs.OUT, '3_xtree', '{xtree_group}'),
 		fq = join(dirs.OUT, '3_xtree', '{sample}.fastq'),
 	output:
 		ref = join(dirs.OUT, '3_xtree', '{xtree_group}','{sample}.ref'),
@@ -307,6 +307,7 @@ rule xtree:
 		prefix = join(dirs.OUT, '3_xtree', '{xtree_group}','{sample}'),
 	shell:
 		"""
+		mkdir -p {params.out_dir}
 		{params.xtree_exec} --seqs {input.fq} --threads {threads} --db {params.db} --ref-out {output.ref} --cov-out {output.cov} --redistribute > {log} 2>&1
 		"""	
 # {params.ext_script} {params.xtree_exec} {threads} {input.fq} {params.db} {params.prefix} > {log} 2>&1
@@ -322,7 +323,7 @@ rule merge_xtree_outputs:
 		indir = join(dirs.OUT, '3_xtree', '{xtree_group}'),
 		xtree_group = '{xtree_group}',
 		out_dir = join(dirs.OUT,'3_xtree', 'merged'),
-		thresh = config['thresh'],
+		thresh = config['min_rel_abund'],
 		hthresh = config['hthresh'],
 		uthresh = config['uthresh'],
 		mappings = join(dirs_ext, 'xtree_all_db_mapping'),

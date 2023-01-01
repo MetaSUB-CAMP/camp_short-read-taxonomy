@@ -100,7 +100,7 @@ def scrub_fastq_captions(fi, fo):
                 f_out.write(l)
 
 
-def reformat_row_meta(row): 
+def reformat_row_meta(row, min_abund): 
     # Reshape into [rank, metaphlan, clade, second_elem, third_elem]
     clade_lst = row[0].split('|')
     raw_clade = clade_lst[-2] if 't__' in clade_lst[-1] else clade_lst[-1] # Pick the lowest clade unless strain present, in which case pick species
@@ -114,7 +114,8 @@ def reformat_row_meta(row):
         clade = raw_clade_lst[1].replace('_', ' ')
         tax_id_lst = row[1].split('|')
         tax_id = tax_id_lst[-2] if rank == 't' else tax_id_lst[-1] # Like the above, pick the lowest clade's taxID
-    return [rank, 'metaphlan', clade, tax_id, row[2]/ 100.0]
+    rel_abund = row[2] / 100.0 if row[2] >= min_abund * 100.0 else 0
+    return [rank, 'metaphlan', clade, tax_id, rel_abund]
         # MetaPhlan4 outputs the percentage numerator instead of decimals
 
 
@@ -122,10 +123,10 @@ def reformat_row_meta(row):
 # In:   #clade_name     NCBI_tax_id     relative_abundance      additional_species
 # In:   k__Bacteria|p__Bacteroidetes    2|976   71.60402
 # Out:  classifier,clade,taxid,sample_X_ra
-def standardize_metaphlan(fi, out_dir):
+def standardize_metaphlan(fi, out_dir, min_abund):
     raw_df = pd.read_csv(fi, sep = '\t', skiprows = 5, header = 0, index_col = None)
     sample = basename(fi).split('.')[0]
-    out_lst = list(raw_df.apply(lambda row : reformat_row_meta(row), axis = 1))
+    out_lst = list(raw_df.apply(lambda row : reformat_row_meta(row, min_abund), axis = 1))
     basic_cols = ['classifier', 'clade', 'tax_id']
     out_df = pd.DataFrame(out_lst, columns = ['rank'] + basic_cols + [sample])
     for r, rank in { 's' : 'species', 'g' : 'genus', 'f' : 'family', 'o' : 'order', 'c' : 'class', 'p' : 'phylum'}.items():
@@ -147,13 +148,14 @@ def standardize_metaphlan(fi, out_dir):
 # Process single-sample Bracken reports into single-sample unified format report
 # In: name    taxonomy_id     taxonomy_lvl    kraken_assigned_reads   added_reads new_est_reads   fraction_total_reads
 # Out:  classifier,classification,taxid,sample_1_ra,sample_2_ra,sample_3_ra
-def standardize_bracken(fi, out_dir):
+def standardize_bracken(fi, out_dir, min_abund):
     raw_df = pd.read_csv(fi, sep = '\t', header = 0, index_col = None)
     abs_path = fi.split('/')
     sample = abs_path[-2]
     rank = abs_path[-1].split('.')[0]
     raw_df['classifier'] = 'kraken_bracken'
-    pruned_df = raw_df[['classifier', 'name', 'taxonomy_id', 'fraction_total_reads']]
+    raw_df[sample] = list(raw_df.apply(lambda row : row[6] if row[6] >= min_abund else 0, axis = 1))
+    pruned_df = raw_df[['classifier', 'name', 'taxonomy_id', sample]]
     pruned_df.columns = ['classifier', 'clade', 'tax_id', sample]
     pruned_df.to_csv(join(out_dir, sample + '_' + rank + '.csv'), header = True, index = False)
 
