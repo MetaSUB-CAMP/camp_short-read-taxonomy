@@ -3,9 +3,9 @@
 
 # --- general --- #
 
-ext: "~/bin/camp_short-read-taxonomy/workflow/ext"
+ext: "/home/chf4012/camp_short-read-taxonomy/workflow/ext"
 mask: False 
-metaphlan: False 
+metaphlan: True
 kraken2: True 
 # xtree kingdom options: bacterial_archaeal, viral, protozoa_fungi
 # Separate options on one line with commas (ex. viral,protozoa_fungi)
@@ -14,22 +14,23 @@ xtree:
 
 # --- metaphlan --- #
 
-metaphlan_database: "~/bin/databases/metaphlan_20220926"
+metaphlan_database: "/athena/masonlab/scratch/users/chf4012/taxonomy_calling/metaphlan_20220926"
 
 
 # --- kraken2/bracken --- #
 
-kraken_bracken_database: "~/bin/databases/Kraken2"
-kraken2_executable: "~/bin/kraken2/kraken2"
+kraken_bracken_database: "/athena/masonlab/scratch/users/chf4012/taxonomy_calling/Kraken2"
+# kraken2_executable: "/home/lam4003/bin/kraken2/kraken2"
+kraken2_executable: "/home/chf4012/miniconda3/envs/short-read-taxonomy/bin/kraken2"
 read_len: 150
 
 
 # --- xtree --- #
 
-bacterial_archaeal_database: "~/bin/databases/GTDB207_filt.xtr"
-viral_database: "~/bin/databases/genbankviralcomplete_99percclust_k17_comp0_20220726.xtr"
-protozoa_fungi_database: "~/bin/databases/genbank_fungi_protozoa_complete_20220726.xtr"
-xtree_executable: "~/bin/xtree_recompile"
+bacterial_archaeal_database: "/athena/masonlab/scratch/users/chf4012/taxonomy_calling/GTDB207_filt.xtr"
+viral_database: "/athena/masonlab/scratch/users/chf4012/taxonomy_calling/genbankviralcomplete_99percclust_k17_comp0_20220726.xtr"
+protozoa_fungi_database: "/athena/masonlab/scratch/users/chf4012/taxonomy_calling/genbank_fungi_protozoa_complete_20220726.xtr"
+xtree_executable: "/athena/masonlab/scratch/users/chf4012/taxonomy_calling/xtree_recompile"
 thresh: 0.02
 hthresh : 0.05
 uthresh : 0.01
