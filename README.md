@@ -9,7 +9,10 @@ There are three taxonomic classification tools integrated which can be run in an
 
 Approach
 --------
-<INSERT PIPELINE IMAGE>
+.. image:: ../images/taxwf.png
+  :align: center
+  :width: 400
+  :alt: workflow loc
 
 Installation
 ------------
@@ -59,30 +62,30 @@ Running each CAMP module takes the same three steps, listed below.
 
 1. As with all CAMP modules, update the `configs/parameters.yaml` file:
 
-| parameter | explanation and options.                                                    |   |   |   |
-|-----------|-----------------------------------------------------------------------------|---|---|---|
-| ext       | path to the executed scripts, usually the path to your workflow/ext folder. |   |   |   |
-| mask      | whether to use bbmask to mask reads, True or False.                         |   |   |   |
-| metaphlan | whether to use metaphlan4 to conduct taxonomy calling, True or False.       |   |   |   |
-| kraken2   | whether to use kraken2 to conduct taxonomy calling, True or False.          |   |   |   |
-| xtree     | whether to use xtree to conduct taxonomy calling, True or False.            |   |   |   |
-| metaphlan_database    | [Mandatory only if 'True' for 'metaphlan'] path to your metaphlan database folder that you installed above.            |   |   |   |
-| kraken2_executable    | [Mandatory only if 'True' for 'kraken2'] path to your kraken2 database/executable folder that you installed above.            |   |   |   |
-| read_len    | [Mandatory only if 'True' for 'kraken2'] integer parameter of kraken2.             |   |   |   |
-| bacterial_archaeal_database    | [Mandatory only if 'True' for 'xtree'] path to bacteria/archaeal databases for xtree.            |   |   |   |
-| viral_database    | [Mandatory only if 'True' for 'xtree'] path to viral databases for xtree.            |   |   |   |
-| protozoa_fungi_database    | [Mandatory only if 'True' for 'xtree'] path to fungi databases for xtree.            |   |   |   |
-| xtree_executable    | [Mandatory only if 'True' for 'xtree'] path to executable for xtree.            |   |   |   |
-| thresh    | [Mandatory only if 'True' for 'xtree'] fraction parameter for xtree, e.g. 0.02.            |   |   |   |
-| hthresh    | [Mandatory only if 'True' for 'xtree'] fraction parameter for xtree, e.g. 0.05.            |   |   |   |
-| uthresh    | [Mandatory only if 'True' for 'xtree'] fraction parameter for xtree, e.g. 0.01.            |   |   |   |
+| parameter | explanation and options.                                                    | 
+|-----------|-----------------------------------------------------------------------------|
+| ext       | path to the executed scripts, usually the path to your workflow/ext folder. |
+| mask      | whether to use bbmask to mask reads, True or False.                         |
+| metaphlan | whether to use metaphlan4 to conduct taxonomy calling, True or False.       |
+| kraken2   | whether to use kraken2 to conduct taxonomy calling, True or False.          |
+| xtree     | whether to use xtree to conduct taxonomy calling, True or False.            |
+| metaphlan_database    | [Mandatory only if 'True' for 'metaphlan'] path to your metaphlan database folder that you installed above.            |
+| kraken2_executable    | [Mandatory only if 'True' for 'kraken2'] path to your kraken2 database/executable folder that you installed above.            |
+| read_len    | [Mandatory only if 'True' for 'kraken2'] integer parameter of kraken2.             |
+| bacterial_archaeal_database    | [Mandatory only if 'True' for 'xtree'] path to bacteria/archaeal databases for xtree.            |
+| viral_database    | [Mandatory only if 'True' for 'xtree'] path to viral databases for xtree.            |
+| protozoa_fungi_database    | [Mandatory only if 'True' for 'xtree'] path to fungi databases for xtree.            |
+| xtree_executable    | [Mandatory only if 'True' for 'xtree'] path to executable for xtree.            |
+| thresh    | [Mandatory only if 'True' for 'xtree'] fraction parameter for xtree, e.g. 0.02.            |
+| hthresh    | [Mandatory only if 'True' for 'xtree'] fraction parameter for xtree, e.g. 0.05.            |
+| uthresh    | [Mandatory only if 'True' for 'xtree'] fraction parameter for xtree, e.g. 0.01.            |
 
 2. Generate your samples.csv file in the following format (in a csv file):
 
-|  | illumina_fwd                                                    |  illumina_rev |   |   |
-|-----------|-----------------------------------------------------------------------------|---|---|---|
-| SAMPLE_NAME      | path to forward read fastq.gz file | path to backward read fastq.gz file  |   |   |
-| ...      | ...                         |...   |   |   |
+|  | illumina_fwd                                                    |  illumina_rev |
+|-----------|-----------------------------------------------------------------------------|---|
+| SAMPLE_NAME      | path to forward read fastq.gz file | path to backward read fastq.gz file  |
+| ...      | ...                         |...   |
 
 3. Deploy! You can try this example command from the camp_short-read-taxonomy repo:
 
