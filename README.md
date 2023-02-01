@@ -20,7 +20,7 @@ Installation
 git clone <https://github.com/MetaSUB-CAMP/camp_short-read-taxonomy>
 ```
 
-2. Set up the conda environment using ``configs/conda/short-read-taxonomy.yaml``. 
+2. Set up the conda environment using ``configs/conda/short-read-taxonomy.yaml``. (Another option would be to use mamba for higher speed)
 
 ```
 cd camp_short-read-taxonomy
@@ -35,6 +35,9 @@ For MetaPhlAn4:
 ```
 wget https://s3.us-east-1.wasabisys.com/camp-databases/v0.1.1/taxonomy/metaphlan_20220926.tar.gz; tar -zxvf metaphlan_20220926.tar.gz
 ```
+
+(Another potential option would be to use  `metaphlan --install --bowtie2db your_path_to_save_database/` for automatic installation through MetaPhlAn4.)
+
 For Kraken2:
 
 ```
@@ -47,29 +50,50 @@ for xtree:
 wget https://s3.us-east-1.wasabisys.com/camp-databases/v0.1.1/orfcalling/xtree_db_gtdb207_kmer29_comp2_20220722.tar.gz
 ```
 
-3. Make sure the installed pipeline works correctly. ``pytest`` only generates temporary outputs so no files should be created.
 
-```
-pytest .tests/unit/
-```
 
 Quickstart
 ----------
 
 Running each CAMP module takes the same three steps, listed below.
 
-1. As with all CAMP modules, update the parameters.yaml file:
+1. As with all CAMP modules, update the `configs/parameters.yaml` file:
 
-<TABLE OF PARAMETERS AND DESCRIPTIONS>
+| parameter | explanation and options.                                                    |   |   |   |
+|-----------|-----------------------------------------------------------------------------|---|---|---|
+| ext       | path to the executed scripts, usually the path to your workflow/ext folder. |   |   |   |
+| mask      | whether to use bbmask to mask reads, True or False.                         |   |   |   |
+| metaphlan | whether to use metaphlan4 to conduct taxonomy calling, True or False.       |   |   |   |
+| kraken2   | whether to use kraken2 to conduct taxonomy calling, True or False.          |   |   |   |
+| xtree     | whether to use xtree to conduct taxonomy calling, True or False.            |   |   |   |
+| metaphlan_database    | [Mandatory only if 'True' for 'metaphlan'] path to your metaphlan database folder that you installed above.            |   |   |   |
+| kraken2_executable    | [Mandatory only if 'True' for 'kraken2'] path to your kraken2 database/executable folder that you installed above.            |   |   |   |
+| read_len    | [Mandatory only if 'True' for 'kraken2'] integer parameter of kraken2.             |   |   |   |
+| bacterial_archaeal_database    | [Mandatory only if 'True' for 'xtree'] path to bacteria/archaeal databases for xtree.            |   |   |   |
+| viral_database    | [Mandatory only if 'True' for 'xtree'] path to viral databases for xtree.            |   |   |   |
+| protozoa_fungi_database    | [Mandatory only if 'True' for 'xtree'] path to fungi databases for xtree.            |   |   |   |
+| xtree_executable    | [Mandatory only if 'True' for 'xtree'] path to executable for xtree.            |   |   |   |
+| thresh    | [Mandatory only if 'True' for 'xtree'] fraction parameter for xtree, e.g. 0.02.            |   |   |   |
+| hthresh    | [Mandatory only if 'True' for 'xtree'] fraction parameter for xtree, e.g. 0.05.            |   |   |   |
+| uthresh    | [Mandatory only if 'True' for 'xtree'] fraction parameter for xtree, e.g. 0.01.            |   |   |   |
 
-2. Generate your samples.csv file in the following format:
+2. Generate your samples.csv file in the following format (in a csv file):
 
-<SAMPLES.CSV FORMAT>
+|  | illumina_fwd                                                    |  illumina_rev |   |   |
+|-----------|-----------------------------------------------------------------------------|---|---|---|
+| SAMPLE_NAME      | path to forward read fastq.gz file | path to backward read fastq.gz file  |   |   |
+| ...      | ...                         |...   |   |   |
 
 3. Deploy! You can try this example command from the camp_short-read-taxonomy repo:
 
 ```
-python workflow/short-read-taxonomy.py -d testrun -s configs/samples.csv
+python3 workflow/short-read-taxonomy.py -d testrun -s configs/samples.csv
+```
+
+Note: to speed up, you can specify the number of cores with the `--core` flag; to continue a Snakemake process that broke accidentally, you might need to use the `--unlock` Snakemake flag. This can be applied when you run the pipeline on a cluster as well.
+
+```
+python3 workflow/short-read-taxonomy.py --cores 5 -d testrun -s configs/samples.csv --unlock
 ```
 
 Module details
