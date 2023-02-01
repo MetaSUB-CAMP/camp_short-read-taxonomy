@@ -164,7 +164,7 @@ rule bracken:
 	conda:
 		join(config['env_yamls'], 'bracken.yaml'),
 	params:
-		kraken_success_file = join(dirs.OUT,'2_kraken2', 'raw_kracken', '{sample}', 'kreport_classes.txcsv'),
+		kraken_success_file = join(dirs.OUT,'2_kraken2', 'raw_kracken', '{sample}', 'kreport_classes.tsv'),
 		out_dir = join(dirs.OUT,'2_kraken2', 'raw_bracken', '{sample}'),
 		rank = lambda wildcards: '{}'.format(wildcards.rank)[:1].capitalize(),
 		read_len = config['read_len'],
@@ -172,9 +172,9 @@ rule bracken:
 	shell:
 		"""
 		mkdir -p {params.out_dir}
-		bracken -r {params.read_len} -d {params.database}  -l {params.rank} -i {input} -o {output} > {log} 2>&1
+		# bracken -r {params.read_len} -d {params.database}  -l {params.rank} -i {input} -o {output} > {log} 2>&1
+		[ -f {params.kraken_success_file} ] && bracken -r {params.read_len} -d {params.database}  -l {params.rank} -i {input} -o {output} > {log} 2>&1 || touch {output}
 		"""
-# [ -f {params.kraken_success_file} ] && bracken -r {params.read_len} -d {params.database}  -l {params.rank} -i {input} -o {output} > {log} 2>&1 ||
 
 rule merge_bracken_outputs:
 	input:
