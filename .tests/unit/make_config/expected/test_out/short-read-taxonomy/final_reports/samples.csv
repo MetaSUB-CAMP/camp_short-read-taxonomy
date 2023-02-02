@@ -1,8 +1,0 @@
-classifier_type,location,mask_status
-metaphlan,/pbtech_mounts/homes064/lam4003/bin/camp_short-read-taxonomy/test_out/short-read-taxonomy/1_metaphlan/metaphlan.tsv,False
-kraken2,/pbtech_mounts/homes064/lam4003/bin/camp_short-read-taxonomy/test_out/short-read-taxonomy/2_kraken2/merged/bracken_species.tsv,False
-kraken2,/pbtech_mounts/homes064/lam4003/bin/camp_short-read-taxonomy/test_out/short-read-taxonomy/2_kraken2/merged/bracken_genus.tsv,False
-kraken2,/pbtech_mounts/homes064/lam4003/bin/camp_short-read-taxonomy/test_out/short-read-taxonomy/2_kraken2/merged/bracken_family.tsv,False
-kraken2,/pbtech_mounts/homes064/lam4003/bin/camp_short-read-taxonomy/test_out/short-read-taxonomy/2_kraken2/merged/bracken_order.tsv,False
-kraken2,/pbtech_mounts/homes064/lam4003/bin/camp_short-read-taxonomy/test_out/short-read-taxonomy/2_kraken2/merged/bracken_class.tsv,False
-kraken2,/pbtech_mounts/homes064/lam4003/bin/camp_short-read-taxonomy/test_out/short-read-taxonomy/2_kraken2/merged/bracken_phylum.tsv,False

@@ -1,0 +1,6 @@
+classifier,clade,tax_id,uhgg
+kraken_bracken,Firmicutes,1239,0.65329
+kraken_bracken,Actinobacteria,201174,0.00037
+kraken_bracken,Proteobacteria,1224,0.29277
+kraken_bracken,Bacteroidota,976,0.00011
+kraken_bracken,Chordata,7711,0.05345

@@ -1,6 +1,0 @@
-#mpa_vJan21_CHOCOPhlAnSGB_202103
-#/home/lam4003/bin/anaconda3/envs/metaphlan/bin/metaphlan --bowtie2db /athena/masonlab/scratch/databases/metagenomics/metaphlan_20220926 --input_type fastq --force -o /pbtech_mounts/homes064/lam4003/bin/camp_short-read-taxonomy/test_out/short-read-taxonomy/1_metaphlan/raw_output/zymo_pos_ctrl.metaphlan --bowtie2out /pbtech_mounts/homes064/lam4003/bin/camp_short-read-taxonomy/test_out/short-read-taxonomy/1_metaphlan/raw_output/zymo_pos_ctrl.bowtie2.bz2 /pbtech_mounts/homes064/lam4003/bin/camp_short-read-taxonomy/test_out/tmp/zymo_pos_ctrl_1.fastq.gz,/pbtech_mounts/homes064/lam4003/bin/camp_short-read-taxonomy/test_out/tmp/zymo_pos_ctrl_2.fastq.gz
-#2000 reads processed
-#SampleID	Metaphlan_Analysis
-#clade_name	NCBI_tax_id	relative_abundance	additional_species
-UNCLASSIFIED	-1	100.0	

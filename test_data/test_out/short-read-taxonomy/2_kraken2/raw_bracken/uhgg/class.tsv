@@ -1,0 +1,7 @@
+name	taxonomy_id	taxonomy_lvl	kraken_assigned_reads	added_reads	new_est_reads	fraction_total_reads
+Clostridia	186801	C	46052	260	46312	0.41035
+Bacilli	91061	C	26942	473	27415	0.24291
+Erysipelotrichia	526524	C	15	0	15	0.00013
+Actinomycetia	1760	C	42	0	42	0.00037
+Gammaproteobacteria	1236	C	32901	140	33041	0.29276
+Mammalia	40674	C	6034	0	6034	0.05346

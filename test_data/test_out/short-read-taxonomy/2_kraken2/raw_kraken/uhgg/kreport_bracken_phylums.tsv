@@ -1,0 +1,17 @@
+100.00	112882	0	R	1	root
+100.00	112882	0	R1	131567	  cellular organisms
+94.65	106848	0	D	2	    Bacteria
+65.37	73787	0	D1	1783272	      Terrabacteria group
+65.33	73745	0	P	1239	        Firmicutes
+0.04	42	0	P	201174	        Actinobacteria
+29.28	33049	0	P	1224	      Proteobacteria
+0.01	12	0	D1	1783270	      FCB group
+0.01	12	0	D2	68336	        Bacteroidetes/Chlorobi group
+0.01	12	0	P	976	          Bacteroidota
+5.35	6034	0	D	2759	    Eukaryota
+5.35	6034	0	D1	33154	      Opisthokonta
+5.35	6034	0	K	33208	        Metazoa
+5.35	6034	0	K1	6072	          Eumetazoa
+5.35	6034	0	K2	33213	            Bilateria
+5.35	6034	0	K3	33511	              Deuterostomia
+5.35	6034	6034	P	7711	                Chordata

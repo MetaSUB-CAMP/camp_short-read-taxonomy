@@ -60,15 +60,16 @@ def cleanup_files(work_dir, df):
             if exists(masked_fq):
                 os.remove(masked_fq)
             os.remove(join(work_dir, 'short-read-taxonomy', '1_metaphlan', s + '_' + d + '.fastq'))
+            os.remove(join(work_dir, 'short-read-taxonomy', '1_metaphlan', 'raw_output', s + '.sam'))
             os.remove(join(work_dir, 'short-read-taxonomy', '3_xtree', s + '.fastq'))
 
 
-def print_cmds(log):
-    fo = basename(log).split('.')[0] + '.cmds'
-    lines = open(log, 'r').read().split('\n')
-    fi = [l for l in lines if l != '']
+def print_cmds(f):
+    # fo = basename(log).split('.')[0] + '.cmds'
+    # lines = open(log, 'r').read().split('\n')
+    fi = [l for l in f.split('\n') if l != '']
     write = False
-    with open(fo, 'w') as f_out:
+    with open('commands.sh', 'w') as f_out:
         for l in fi:
             if 'rule' in l:
                 f_out.write('# ' + l.strip().replace('rule ', '').replace(':', '') + '\n')

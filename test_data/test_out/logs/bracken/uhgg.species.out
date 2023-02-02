@@ -1,0 +1,19 @@
+ >> Checking for Valid Options...
+ >> Running Bracken 
+      >> python src/est_abundance.py -i /home/lam4003/bin/camp_short-read-taxonomy/test_out/short-read-taxonomy/2_kraken2/raw_kraken/uhgg/kreport.tsv -o /home/lam4003/bin/camp_short-read-taxonomy/test_out/short-read-taxonomy/2_kraken2/raw_bracken/uhgg/species.tsv -k /workdir/lam4003/Databases/Kraken2_29122022/Prebuilt_09122022/database100mers.kmer_distrib -l S -t 10
+>> Checking report file: /home/lam4003/bin/camp_short-read-taxonomy/test_out/short-read-taxonomy/2_kraken2/raw_kraken/uhgg/kreport.tsv
+PROGRAM START TIME: 01-29-2023 20:27:13
+BRACKEN SUMMARY (Kraken report: /home/lam4003/bin/camp_short-read-taxonomy/test_out/short-read-taxonomy/2_kraken2/raw_kraken/uhgg/kreport.tsv)
+    >>> Threshold: 10 
+    >>> Number of species in sample: 268 
+	  >> Number of species with reads > threshold: 59 
+	  >> Number of species with reads < threshold: 209 
+    >>> Total reads in sample: 114917
+	  >> Total reads kept at species level (reads > threshold): 70850
+	  >> Total reads discarded (species reads < threshold): 482
+	  >> Reads distributed: 41539
+	  >> Reads not distributed (eg. no species above threshold): 22
+	  >> Unclassified reads: 2024
+BRACKEN OUTPUT PRODUCED: /home/lam4003/bin/camp_short-read-taxonomy/test_out/short-read-taxonomy/2_kraken2/raw_bracken/uhgg/species.tsv
+PROGRAM END TIME: 01-29-2023 20:27:13
+  Bracken complete.

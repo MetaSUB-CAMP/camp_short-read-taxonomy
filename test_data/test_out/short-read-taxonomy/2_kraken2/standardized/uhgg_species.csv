@@ -1,0 +1,60 @@
+classifier,clade,tax_id,uhgg
+kraken_bracken,Roseburia intestinalis,166486,0.23006
+kraken_bracken,Roseburia sp. NSJ-69,2763062,0.00464
+kraken_bracken,Roseburia hominis,301301,0.00092
+kraken_bracken,Anaerostipes hadrus,649756,0.00133
+kraken_bracken,Wujia chipingensis,2763670,0.00108
+kraken_bracken,Enterocloster bolteae,208479,0.00085
+kraken_bracken,Enterocloster clostridioformis,1531,0.00013
+kraken_bracken,Simiaoa sunii,2763672,0.0009
+kraken_bracken,Blautia obeum,40520,0.00034
+kraken_bracken,[Ruminococcus] gnavus,33038,0.00119
+kraken_bracken,[Ruminococcus] torques,33039,0.00015
+kraken_bracken,Anaerobutyricum hallii,39488,0.00044
+kraken_bracken,Butyrivibrio crossotus,45851,0.00028
+kraken_bracken,Dorea longicatena,88431,0.00024
+kraken_bracken,Lachnospira eligens,39485,0.00019
+kraken_bracken,Faecalibacterium prausnitzii,853,0.04435
+kraken_bracken,Faecalibacterium sp. IP329,2929489,0.01806
+kraken_bracken,Faecalibacterium sp. I2392,2929490,0.01732
+kraken_bracken,Faecalibacterium sp. I3389,2929493,0.00139
+kraken_bracken,Faecalibacterium sp. I3333,2929492,0.00125
+kraken_bracken,Faecalibacterium sp. HTFF,2929491,0.00085
+kraken_bracken,Faecalibacterium sp. I4179,2929494,0.00147
+kraken_bracken,Faecalibacterium sp. I4384,2929495,0.00238
+kraken_bracken,Faecalibacterium sp. IP118,2929488,0.00818
+kraken_bracken,Faecalibacterium duncaniae,411483,0.07109
+kraken_bracken,Vescimonas fastidiosa,2714353,0.00011
+kraken_bracken,Ruthenibacterium lactatiformans,1550024,0.00013
+kraken_bracken,Flavonifractor plautii,292800,0.00012
+kraken_bracken,Subdoligranulum variabile,214851,0.0001
+kraken_bracken,Clostridium sp. M62/1,411486,0.00061
+kraken_bracken,Massilistercora timonensis,2086584,0.00017
+kraken_bracken,Clostridioides difficile,1496,0.00011
+kraken_bracken,Bacillus sp. LJBS06,2809036,0.05727
+kraken_bracken,Bacillus sp. JS,1127744,0.04006
+kraken_bracken,Bacillus sp. MD-5,2009331,0.02872
+kraken_bracken,Bacillus sp. MBGLi79,2070759,0.016
+kraken_bracken,Bacillus sp. K1,745774,0.00074
+kraken_bracken,Bacillus sp. NSP9.1,1071078,0.0001
+kraken_bracken,Bacillus subtilis,1423,0.08627
+kraken_bracken,Bacillus vallismortis,72361,0.00315
+kraken_bracken,Bacillus tequilensis,227866,0.00151
+kraken_bracken,Bacillus halotolerans,260554,0.00085
+kraken_bracken,Bacillus mojavensis,72360,0.0006
+kraken_bracken,Bacillus velezensis,492670,0.00122
+kraken_bracken,Bacillus inaquosorum,483913,0.00144
+kraken_bracken,Bacillus atrophaeus,1452,0.00036
+kraken_bracken,Bacillus spizizenii,96241,0.00044
+kraken_bracken,Bacillus cabrialesii,2487276,0.00121
+kraken_bracken,Bacillus rugosus,2715209,0.00103
+kraken_bracken,Bacillus glycinifermentans,1664069,0.00012
+kraken_bracken,Bacillus pumilus,1408,9e-05
+kraken_bracken,Bifidobacterium longum,216816,0.00022
+kraken_bracken,Enterobacter cloacae,550,0.29276
+kraken_bracken,Enterobacter hormaechei,158836,0.00082
+kraken_bracken,Enterobacter asburiae,61645,0.00012
+kraken_bracken,Enterobacter kobei,208224,0.00012
+kraken_bracken,Enterobacter roggenkampii,1812935,0.00011
+kraken_bracken,Escherichia coli,562,0.00035
+kraken_bracken,Homo sapiens,9606,0.05369

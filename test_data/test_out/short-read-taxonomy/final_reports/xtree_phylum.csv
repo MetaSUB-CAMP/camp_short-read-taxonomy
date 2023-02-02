@@ -1,0 +1,42 @@
+classifier,clade,tax_id,uhgg
+xtree,Acidobacteriota,57723,4.97077186145465e-06
+xtree,Actinobacteriota,201174,0.004662584006044061
+xtree,Asgardarchaeota,1935183,4.97077186145465e-06
+xtree,Bacteroidota,976,0.0014116992086530386
+xtree,Bdellovibrionota,NaN,4.97077186145465e-06
+xtree,Caldisericota,67814,4.97077186145465e-06
+xtree,Campylobacterota,29547,0.0001938601025966651
+xtree,Chlamydiota,204428,9.94154372290929e-06
+xtree,Chloroflexota,200795,4.473694675309179e-05
+xtree,Cyanobacteria,1117,0.00027339245237993935
+xtree,Dependentiae,95901,9.94154372290929e-06
+xtree,Desulfobacterota,2904303,3.4795403030182505e-05
+xtree,Desulfobacterota I,NaN,3.47954030301825e-05
+xtree,Elusimicrobiota,74152,9.9415437229093e-06
+xtree,Eremiobacterota,1154676,4.97077186145465e-06
+xtree,Firmicutes,1239,0.2318517119338283
+xtree,Firmicutes A,NaN,0.4568089632958149
+xtree,Firmicutes B,NaN,3.97661748916372e-05
+xtree,Firmicutes C,NaN,0.0001093569809520021
+xtree,Firmicutes D,NaN,4.97077186145465e-06
+xtree,Firmicutes E,NaN,4.97077186145465e-06
+xtree,Fusobacteriota,32066,4.97077186145465e-06
+xtree,Halobacteriota,NaN,3.479540303018253e-05
+xtree,Margulisbacteria,1817808,1.49123155843639e-05
+xtree,Methanobacteriota,28890,0.00023362627748834758
+xtree,Methanobacteriota A,NaN,1.98830874458186e-05
+xtree,Methanobacteriota B,NaN,1.49123155843639e-05
+xtree,Myxococcota,2818505,0.00011432775281345683
+xtree,Myxococcota A,NaN,4.97077186145465e-06
+xtree,Nanoarchaeota,192989,4.97077186145465e-06
+xtree,OLB16,NaN,4.97077186145465e-06
+xtree,Omnitrophota,NaN,4.97077186145465e-06
+xtree,Patescibacteria,1783273,9.9415437229093e-06
+xtree,Planctomycetota,203682,8.947389350618362e-05
+xtree,Proteobacteria,1224,0.30379369308465765
+xtree,SZUA-79,NaN,4.97077186145465e-06
+xtree,Spirochaetota,203691,3.479540303018253e-05
+xtree,Thermoproteota,28889,9.9415437229093e-06
+xtree,Thermotogota,200918,4.97077186145465e-06
+xtree,UBA10199,NaN,4.97077186145465e-06
+xtree,Verrucomicrobiota,74201,5.964926233745573e-05

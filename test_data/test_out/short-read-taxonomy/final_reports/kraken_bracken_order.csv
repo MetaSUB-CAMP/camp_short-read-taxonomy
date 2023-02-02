@@ -1,0 +1,7 @@
+classifier,clade,tax_id,uhgg
+kraken_bracken,Eubacteriales,186802,0.41049
+kraken_bracken,Bacillales,1385,0.24291
+kraken_bracken,Erysipelotrichales,526525,0.00013
+kraken_bracken,Bifidobacteriales,85004,0.00025
+kraken_bracken,Enterobacterales,91347,0.29273
+kraken_bracken,Primates,9443,0.05348

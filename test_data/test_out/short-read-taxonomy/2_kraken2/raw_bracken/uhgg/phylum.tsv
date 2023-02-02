@@ -1,0 +1,6 @@
+name	taxonomy_id	taxonomy_lvl	kraken_assigned_reads	added_reads	new_est_reads	fraction_total_reads
+Firmicutes	1239	P	73259	486	73745	0.65329
+Actinobacteria	201174	P	42	0	42	0.00037
+Proteobacteria	1224	P	32913	136	33049	0.29277
+Bacteroidota	976	P	12	0	12	0.00011
+Chordata	7711	P	6034	0	6034	0.05345

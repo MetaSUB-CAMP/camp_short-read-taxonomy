@@ -7,7 +7,7 @@ CAMP Short-Read Taxonomy
         :target: https://camp-short-read-taxonomy.readthedocs.io/en/latest/?version=latest
         :alt: Documentation Status
 
-.. image:: https://img.shields.io/badge/version-0.1.0-brightgreen
+.. image:: https://img.shields.io/badge/version-0.4.0-brightgreen
 
 
 Overview
@@ -20,7 +20,7 @@ There are three taxonomic classification tools integrated which can be run in an
 Installation
 ------------
 
-1. Clone repo from `Github tutorial <https://github.com/MetaSUB-CAMP/camp_short-read-taxonomy>`_.
+1. Clone repo from `Github <https://github.com/MetaSUB-CAMP/camp_short-read-taxonomy>`_.
 
 2. Set up the conda environment (contains, Snakemake) using ``configs/conda/short-read-taxonomy.yaml``. 
 
@@ -52,7 +52,7 @@ Installation
 
 8. The XTree databases also need to be downloaded to a database folder. Details TBD.
 
-9. Update the locations of the test datasets in ``samples.csv``, and the relevant parameters in ``configs/parameters.yaml``.
+9. Update the locations of the test datasets in ``samples.csv``, and the relevant parameters in ``test_data/parameters`` and ``configs/parameters.yaml``.
 
 10. Make sure the installed pipeline works correctly. 
 ::
@@ -60,13 +60,9 @@ Installation
     cd camp_short-read-taxonomy
     conda env create -f configs/conda/short-read-taxonomy.yaml
     conda activate short-read-taxonomy
+    
     # Run tests on the included sample dataset
-    python /path/to/camp_short-read-taxonomy/workflow/short-read-taxonomy.py \
-    -d /path/to/camp_short-read-taxonomy/test_out \
-    -s /path/to/camp_short-read-taxonomy/test_data/samples.csv \
-    -p /path/to/camp_short-read-taxonomy/test_data/parameters.yaml \
-    -r /path/to/camp_short-read-taxonomy/test_data/resources.yaml \
-    --cores 20
+    python /path/to/camp_short-read-taxonomy/workflow/short-read-taxonomy.py test
 
 
 Using the Module
@@ -74,7 +70,7 @@ Using the Module
 
 **Input**: ``/path/to/samples.csv`` provided by the user.
 
-**Output**: Summary reports from MetaPhlan4, Kraken2, and/or XTree. 
+**Output**: Summary reports from MetaPhlan4, Kraken2, and/or XTree. For more information, see the demo test output directory in ``test_data/test_out``. 
 
 - ``/path/to/camp/dir/short-read-taxonomy/final_reports/*.tsv`` where ``*`` is one of the classification algorithms
 
@@ -94,7 +90,6 @@ Using the Module
     - Note: Metaphlan and Bracken merge outputs from all samples to get aggregated relative abundances across all samples. To get relative abundances for a single sample, put each sample in its own ``samples.csv``.
 
 2. Update the relevant parameters in ``configs/parameters.yaml``.
-    * Note: For some reason, ``abspath(__file__)`` does not work to extract the directory that the Snakefile is in, so the directory containing external files and scripts needs to be manually set. 
 
 3. Update the computational resources available to the pipeline in ``resources.yaml``. 
 
@@ -173,10 +168,10 @@ These instructions are meant for developers who have made a tool and want to int
 5. Run the pipeline once through to make sure everything works using the test data in ``test_data/`` if appropriate, or your own appropriately-sized test data. 
     * Note: Python functions imported from ``utils.py`` into ``Snakefile`` should be debugged on the command-line first before being added to a rule because Snakemake doesn't port standard output/error well when using ``run:``.
 
-6. Increment the version number of the modular pipeline.
+6. Increment the version number of the modular pipeline- ``patch`` for bug fixes (changes E), ``minor`` for substantial changes to the rules and/or workflow (changes C), and ``major`` only applies to major releases of the CAMP. 
 ::
-    bump2version --allow-dirty --commit --tag major workflow/__init__.py \
-                 --current-version A.C.E --new-version B.D.F
+
+    bump2version --current-version A.C.E patch
 
 7. If you want your tool integrated into the main CAMP pipeline, send a pull request and we'll have a look at it ASAP! 
     - Please make it clear what your tool intends to do by including a summary in the commit/pull request (ex. "Release X.Y.Z: Integration of tool A, which does B to C and outputs D").

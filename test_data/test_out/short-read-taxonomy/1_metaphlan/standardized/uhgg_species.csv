@@ -1,0 +1,4 @@
+classifier,clade,tax_id,uhgg
+metaphlan,Bacillus subtilis,1423,0.5386412
+metaphlan,Faecalibacterium prausnitzii,853,0.7227986
+metaphlan,Roseburia intestinalis,166486,0.7385602
