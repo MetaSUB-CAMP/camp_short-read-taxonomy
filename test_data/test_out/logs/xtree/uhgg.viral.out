@@ -1,25 +1,0 @@
-CrossTree v0.92i by Gabe
-Using 20 thread(s)
-DBv: 1, rixSz = 4, PL = 13, SL = 4, ktSz = 4
-Number of refs = 32654, kmers = 1120814286
-Size of kpod = 8
-Read file of size = 9503743052 (h1: 0, h2: 0)
-WARNING: No taxonomy was included during DB formation
-
-* Beginning alignment...
-Processed 0 queriesProcessed 65536 queriesProcessed 131072 queriesProcessed 196608 queries - Total k-mers: 30797756, non-error: 30797756, matchedF: 2632026, matchedR: 2632840
---> Successfully aligned 229815/229834 queries [0.697987].
-
-* Performing capitalist redistribution...
---> Capitalist redistribution complete (11,0,0) [0.105765]
-
-* Printing reference tally table...
---> Reference table written [0.013501]
-
-* Printing coverage table...
- - Done with coverage loop. [0.717730]
- - Beginning accumulation...
- - Total k-mers found: 1120814286 (493439581 unique)
---> Coverage table written [0.744050]
-
-All outputs written.

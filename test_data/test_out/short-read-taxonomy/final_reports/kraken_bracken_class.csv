@@ -1,7 +1,0 @@
-classifier,clade,tax_id,uhgg
-kraken_bracken,Clostridia,186801,0.41035
-kraken_bracken,Bacilli,91061,0.24291
-kraken_bracken,Erysipelotrichia,526524,0.00013
-kraken_bracken,Actinomycetia,1760,0.00037
-kraken_bracken,Gammaproteobacteria,1236,0.29276
-kraken_bracken,Mammalia,40674,0.05346

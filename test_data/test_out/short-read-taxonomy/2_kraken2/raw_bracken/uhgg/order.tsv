@@ -1,7 +1,0 @@
-name	taxonomy_id	taxonomy_lvl	kraken_assigned_reads	added_reads	new_est_reads	fraction_total_reads
-Eubacteriales	186802	O	46052	260	46312	0.41049
-Bacillales	1385	O	26933	473	27406	0.24291
-Erysipelotrichales	526525	O	15	0	15	0.00013
-Bifidobacteriales	85004	O	28	0	28	0.00025
-Enterobacterales	91347	O	32877	149	33026	0.29273
-Primates	9443	O	6034	0	6034	0.05348

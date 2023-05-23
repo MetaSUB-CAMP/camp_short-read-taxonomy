@@ -161,9 +161,26 @@ rule merge_metaphlan:
 		concat_tbls(input, str(output))
 
 
-rule extract_unclassified_metaphlan:
+rule dedup_metaphlan:
 	input:
 		join(dirs.OUT,'1_metaphlan','raw_output','{sample}.sam'),
+	output:
+		join(dirs.OUT,'1_metaphlan','raw_output','{sample}.dedup.sam'),
+	params:
+		new_header = join(dirs.OUT,'1_metaphlan','raw_output', '{sample}.dedup.txt'),
+	shell:
+		"""
+		(grep '@HD' {input}; grep '@SQ' {input} | sort - | uniq) > {params.new_header}
+		L_START=$(grep -n '@PG' {input} | cut -d : -f 1)
+		echo ${{L_START}}
+		(cat {params.new_header}; sed -n "${{L_START}},$ p" {input}) > {output}
+		"""
+# less +"${{L_START}}"
+
+
+rule extract_unclassified_metaphlan:
+	input:
+		join(dirs.OUT,'1_metaphlan','raw_output','{sample}.dedup.sam'),
 	output:
 		fwd = join(dirs.OUT,'final_reports','unclassified', 'metaphlan', '{sample}_1.fastq.gz'),
 		rev = join(dirs.OUT,'final_reports','unclassified', 'metaphlan', '{sample}_2.fastq.gz'),
@@ -173,9 +190,10 @@ rule extract_unclassified_metaphlan:
 	resources:
 		mem_mb = config['metaphlan_mem_mb'],
 	params:
-		join(dirs.OUT, 'final_reports', 'unclassified'),
+		out_dir = join(dirs.OUT, 'final_reports', 'unclassified', 'metaphlan'),
 	shell:
 		"""
+		mkdir -p {params.out_dir}
 		samtools fastq -@ {threads} -f 4 {input} -1 {output.fwd} -2 {output.rev} -s {output.unp}
 		"""
 
@@ -214,7 +232,6 @@ rule bracken:
 	conda:
 		join(config['env_yamls'], 'bracken.yaml'),
 	params:
-		kraken_success_file = join(dirs.OUT,'2_kraken2', 'raw_kracken', '{sample}', 'kreport_classes.tsv'),
 		out_dir = join(dirs.OUT,'2_kraken2', 'raw_bracken', '{sample}'),
 		rank = lambda wildcards: '{}'.format(wildcards.rank)[:1].capitalize(),
 		read_len = config['read_len'],
@@ -222,9 +239,9 @@ rule bracken:
 	shell:
 		"""
 		mkdir -p {params.out_dir}
-		# bracken -r {params.read_len} -d {params.database}  -l {params.rank} -i {input} -o {output} > {log} 2>&1
-		[ -f {params.kraken_success_file} ] && bracken -r {params.read_len} -d {params.database}  -l {params.rank} -i {input} -o {output} > {log} 2>&1 || touch {output}
+		bracken -r {params.read_len} -d {params.database}  -l {params.rank} -i {input} -o {output} > {log} 2>&1
 		"""
+# [ -f {params.kraken_success_file} ] && bracken -r {params.read_len} -d {params.database}  -l {params.rank} -i {input} -o {output} > {log} 2>&1 || touch {output}
 
 
 rule standardize_bracken:
@@ -238,7 +255,7 @@ rule standardize_bracken:
 	run:
 		if not exists(str(params.out_dir)):
 			os.makedirs(str(params.out_dir))
-		standardize_bracken(str(input), str(params.out_dir), int(params.min_abd))
+		standardize_bracken(str(input), str(params.out_dir), float(params.min_abd))
 
 
 rule merge_bracken:

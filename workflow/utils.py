@@ -61,6 +61,8 @@ def cleanup_files(work_dir, df):
                 os.remove(masked_fq)
             os.remove(join(work_dir, 'short-read-taxonomy', '1_metaphlan', s + '_' + d + '.fastq'))
             os.remove(join(work_dir, 'short-read-taxonomy', '1_metaphlan', 'raw_output', s + '.sam'))
+            os.remove(join(work_dir, 'short-read-taxonomy', '1_metaphlan', 'raw_output', s + '.dedup.sam'))
+            os.remove(join(work_dir, 'short-read-taxonomy', '1_metaphlan', 'raw_output', s + '.dedup.txt'))
             os.remove(join(work_dir, 'short-read-taxonomy', '3_xtree', s + '.fastq'))
 
 
@@ -103,11 +105,14 @@ def scrub_fastq_captions(fi, fo):
 def reformat_row_meta(row, min_abund): 
     # Reshape into [rank, metaphlan, clade, second_elem, third_elem]
     clade_lst = row[0].split('|')
-    raw_clade = clade_lst[-2] if 't__' in clade_lst[-1] else clade_lst[-1] # Pick the lowest clade unless strain present, in which case pick species
+    if 't__' in clade_lst[-1]:
+        return []
+    else:
+        raw_clade = clade_lst[-1] # Pick the lowest clade unless strain present, in which case skip
     if 'unclassified' in raw_clade:
         rank = 'u'
         clade = 'unclassified'
-        tax_id = -1
+        tax_id = 'NaN'
     else:
         raw_clade_lst = raw_clade.split('__')
         rank = raw_clade_lst[0]
@@ -131,18 +136,9 @@ def standardize_metaphlan(fi, out_dir, min_abund):
     out_df = pd.DataFrame(out_lst, columns = ['rank'] + basic_cols + [sample])
     for r, rank in { 's' : 'species', 'g' : 'genus', 'f' : 'family', 'o' : 'order', 'c' : 'class', 'p' : 'phylum'}.items():
         sub_df = out_df[out_df.iloc[:,0] == r]
-        if sub_df.empty:
-            agg_df = sub_df
-        else:
+        if not sub_df.empty:
             sub_df.drop(columns = sub_df.columns[0], axis = 1, inplace = True) # Get rid of rank column
-            agg_dct = {}
-            agg_dct[sample] = 'sum'
-            for c in basic_cols:
-                agg_dct[c] = 'first'
-            agg_df = sub_df.groupby(sub_df['clade']).aggregate(agg_dct)
-            agg_df.reset_index(inplace = True, drop = True)
-            agg_df = agg_df[basic_cols + [sample]]
-        agg_df.to_csv(join(out_dir, sample + '_' + rank + '.csv'), header = True, index = False)
+        sub_df.to_csv(join(out_dir, sample + '_' + rank + '.csv'), header = True, index = False)
 
 
 # Process single-sample Bracken reports into single-sample unified format report
@@ -167,16 +163,19 @@ def load_taxid(ncbi_taxid):
     return {i : row for i, row in pruned_df.iterrows()} # This takes a long time
 
 
-def reformat_row_xtree(row, n2i_dct, rank):
+def reformat_row_xtree(row, n2i_dct, r):
     # Reshape into [rank, xtree, clade, sample_1_ra,...,sample_n_ra]
     raw_clade = 'NaN'
     for c in row[0].split(';'):
-        if rank + '__' in c:
+        if r + '__' in c:
             raw_clade = c
     if raw_clade == 'NaN':
         return
     raw_clade_lst = raw_clade.split('__')
     clade = raw_clade_lst[1].replace('_', ' ')
+    clade_name_parts = clade.split()
+    if len(clade_name_parts[-1]) == 1 and clade_name_parts[-1].isupper(): # Delete non-canonical information from taxon name
+        clade = clade[:-2]
     tax_id = n2i_dct[clade][0] if clade in n2i_dct else 'NaN'
     new_row = ['xtree', clade, tax_id]
     new_row.extend(row[1:])
@@ -198,15 +197,12 @@ def standardize_xtree(fi, out_dir, ncbi_taxid, uthresh):
         filt_lst = [x for x in out_lst if x is not None]
         filt_df = pd.DataFrame(filt_lst, columns = column_names)
         filt_df.columns = column_names
-        if r == 's':
-            out_df = filt_df
-        else:
-            agg_dct = {}
-            for c in basic_cols:
-                agg_dct[c] = 'first'
-            for c in sample_names:
-                agg_dct[c] = 'sum'
-            out_df = filt_df.groupby(filt_df['clade']).aggregate(agg_dct)
+        agg_dct = {}
+        for c in basic_cols:
+            agg_dct[c] = 'first'
+        for c in sample_names:
+            agg_dct[c] = 'sum'
+        out_df = filt_df.groupby(filt_df['clade']).aggregate(agg_dct)
         out_df.reset_index(inplace = True, drop = True)
         out_df.mask(out_df[sample_names] < uthresh, inplace = True)
         out_df.dropna(axis = 0, how = 'all', subset = sample_names, inplace = True)
