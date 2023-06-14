@@ -6,7 +6,7 @@ import os
 from os.path import abspath, basename, dirname, exists, join
 import pandas as pd
 import shutil
-from utils import Workflow_Dirs, ingest_samples, scrub_fastq_captions, standardize_metaphlan, standardize_bracken, standardize_xtree, concat_tbls, extract_unclassified_names
+from utils import Workflow_Dirs, ingest_samples, scrub_fastq_captions
 
 
 # Load and/or make the working directory structure
@@ -16,7 +16,7 @@ dirs = Workflow_Dirs(config['work_dir'], 'short-read-taxonomy')
 # Load sample names and input files 
 SAMPLES = ingest_samples(config['samples'], dirs.TMP)
 RANKS   = ['species', 'genus', 'family', 'order', 'class', 'phylum']
-FQ_DIRS  = ['1', '2']
+RANK_ABBREV = { 'species' : 'S', 'genus' : 'G', 'family' : 'F', 'order' : 'O', 'class' : 'C', 'phylum' : 'P'}
 
 # Specify the location of any external resources and scripts
 dirs_ext = config['ext'] # join(dirname(abspath(__file__)), 'ext')
@@ -36,34 +36,22 @@ def read_masking(wildcards):
 	return([fwd,rev])
 
 
-def check_make(d):
-    if not exists(d):
-        os.makedirs(d)
-
-
 def workflow_mode(wildcards):
 	out = []
 	if bool(config['metaphlan']):
-		out.extend(expand(join(dirs.OUT, 'final_reports', 'metaphlan_{rank}.csv'), rank = RANKS))
-		check_make(join(dirs.OUT, 'final_reports', 'unclassified', 'metaphlan'))
-		out.extend(expand(join(dirs.OUT, 'final_reports', 'unclassified', 'metaphlan', '{sample}_{dir}.fastq.gz'), \
-			sample = SAMPLES, dir = FQ_DIRS)),
+		out.append(join(dirs.OUT,'1_metaphlan','metaphlan.tsv'))
 	if bool(config['kraken2']):
-		out.extend(expand(join(dirs.OUT, 'final_reports', 'kraken_bracken_{rank}.csv'), rank = RANKS))
-		check_make(join(dirs.OUT,'final_reports','unclassified','kraken_bracken'))
-		out.extend(expand(join(dirs.OUT, 'final_reports', 'unclassified', 'kraken_bracken', '{sample}_{dir}.fastq.gz'), \
-			sample = SAMPLES, dir = FQ_DIRS)),
+		out.extend(expand(join(dirs.OUT, '2_kraken2', 'merged', \
+			'bracken_{rank}.tsv'), rank = RANKS))
 	if config['xtree']:
 		XTREE = [g.strip() for g in config['xtree'].split(',')]
 		for g in XTREE:
 			out_dir = join(dirs.OUT, '3_xtree', g)
 			if not exists(out_dir):
 				os.makedirs(out_dir)
-			if g == 'bacterial_archaeal':
-				out.extend(expand(join(dirs.OUT,'final_reports','xtree_{rank}.csv'), rank = RANKS))
-			else:
-				out.append(join(dirs.OUT, '3_xtree', 'merged', g + '_ra.tsv'))
-	return out
+		out.extend(expand(join(dirs.OUT, '3_xtree', 'merged', \
+			'{xtree_group}_ra.tsv'), xtree_group = XTREE))
+	return(out)
 
 
 rule all:
@@ -105,10 +93,9 @@ rule scrub_fastq_captions:
 
 rule metaphlan:
 	input:
-		lambda wildcards: expand(join(dirs.OUT,'1_metaphlan','{sample}_{dir}.fastq'), sample = wildcards.sample, dir = FQ_DIRS),
+		lambda wildcards: expand(join(dirs.OUT,'1_metaphlan','{sample}_{dir}.fastq'), sample = wildcards.sample, dir = ['1', '2']),
 	output:
-		report = join(dirs.OUT,'1_metaphlan','raw_output','{sample}.metaphlan'),
-		sam = join(dirs.OUT,'1_metaphlan','raw_output','{sample}.sam'),
+		join(dirs.OUT,'1_metaphlan','raw_output','{sample}.metaphlan'),
 	log:
 		join(dirs.LOG, 'metaphlan', '{sample}.out'),
 	conda:
@@ -118,91 +105,36 @@ rule metaphlan:
 	resources:
 		mem_mb = config['metaphlan_mem_mb'],
 	params:
-		prefix = join(dirs.OUT,'1_metaphlan','raw_output', '{sample}'),
+		out_dir = join(dirs.OUT,'1_metaphlan','raw_output'),
+		prefix=join(dirs.OUT,'1_metaphlan','raw_output', '{sample}'),
 		database = config['metaphlan_database'],
 	shell:
 		"""
-		metaphlan --nproc {threads} -t rel_ab_w_read_stats --force \
-			--bowtie2db {params.database} \
-			--bowtie2out {params.prefix}.bowtie2.bz2 \
-			-o {output.report} --samout {output.sam} \
-			--input_type fastq $(echo {input} | sed 's/ /,/g') > {log} 2>&1
-		"""
-
-
-rule standardize_metaphlan:
-	input:
-		join(dirs.OUT,'1_metaphlan', 'raw_output','{sample}.metaphlan'),
-	output: 
-		join(dirs.OUT,'1_metaphlan', 'standardized', '{sample}_species.csv'),
-		join(dirs.OUT, '1_metaphlan', 'standardized', '{sample}_genus.csv'),
-		join(dirs.OUT, '1_metaphlan', 'standardized', '{sample}_family.csv'),
-		join(dirs.OUT, '1_metaphlan', 'standardized', '{sample}_order.csv'),
-		join(dirs.OUT, '1_metaphlan', 'standardized', '{sample}_class.csv'),
-		join(dirs.OUT, '1_metaphlan', 'standardized', '{sample}_phylum.csv'),
-	params:
-		out_dir = join(dirs.OUT,'1_metaphlan','standardized'),
-		min_abd = config['min_rel_abund'],
-	run:
-		if not exists(str(params.out_dir)):
-			os.makedirs(str(params.out_dir))
-		standardize_metaphlan(str(input), str(params.out_dir), int(params.min_abd))
-# lambda wildcards: expand(join(dirs.OUT,'1_metaphlan', 'standardized', '{sample}_{rank}.csv'), sample = wildcards.sample, rank = RANKS),
-
-
-rule merge_metaphlan:
-	input:
-		lambda wildcards: expand(join(dirs.OUT, '1_metaphlan', 'standardized', '{sample}_{rank}.csv'), sample = SAMPLES, rank = wildcards.rank),
-	output: 
-		join(dirs.OUT, 'final_reports', 'metaphlan_{rank}.csv'),
-	params:
-		out_dir = join(dirs.OUT, 'final_reports'),
-	run:
-		concat_tbls(input, str(output))
-
-
-rule dedup_metaphlan:
-	input:
-		join(dirs.OUT,'1_metaphlan','raw_output','{sample}.sam'),
-	output:
-		join(dirs.OUT,'1_metaphlan','raw_output','{sample}.dedup.sam'),
-	params:
-		new_header = join(dirs.OUT,'1_metaphlan','raw_output', '{sample}.dedup.txt'),
-	shell:
-		"""
-		(grep '@HD' {input}; grep '@SQ' {input} | sort - | uniq) > {params.new_header}
-		L_START=$(grep -n '@PG' {input} | cut -d : -f 1)
-		echo ${{L_START}}
-		(cat {params.new_header}; sed -n "${{L_START}},$ p" {input}) > {output}
-		"""
-# less +"${{L_START}}"
-
-
-rule extract_unclassified_metaphlan:
-	input:
-		join(dirs.OUT,'1_metaphlan','raw_output','{sample}.dedup.sam'),
-	output:
-		fwd = join(dirs.OUT,'final_reports','unclassified', 'metaphlan', '{sample}_1.fastq.gz'),
-		rev = join(dirs.OUT,'final_reports','unclassified', 'metaphlan', '{sample}_2.fastq.gz'),
-		unp = join(dirs.OUT,'final_reports','unclassified', 'metaphlan', '{sample}_unp.fastq.gz'),
-	threads:
-		config['metaphlan_threads'],
-	resources:
-		mem_mb = config['metaphlan_mem_mb'],
-	params:
-		out_dir = join(dirs.OUT, 'final_reports', 'unclassified', 'metaphlan'),
-	shell:
-		"""
 		mkdir -p {params.out_dir}
-		samtools fastq -@ {threads} -f 4 {input} -1 {output.fwd} -2 {output.rev} -s {output.unp}
+		metaphlan --nproc {threads} --bowtie2db {params.database} --input_type fastq --force  -o {output} --bowtie2out {params.prefix}.bowtie2.bz2 $(echo {input} | sed 's/ /,/g') > {log} 2>&1
+		""" 
+
+
+rule merge_metaphlan_outputs:
+	input:
+		expand(join(dirs.OUT,'1_metaphlan','raw_output','{sample}.metaphlan'),sample = SAMPLES),
+	output:
+		join(dirs.OUT,'1_metaphlan','metaphlan.tsv'),
+	conda:
+		join(config['env_yamls'], 'metaphlan.yaml'),
+	params: 
+		ext_script = join(dirs_scr, 'merge_metaphlan_tables.py'),
+	shell:
 		"""
+		python3 {params.ext_script} {input} > {output}
+		"""	
 
 
 rule kraken2:
 	input:
 		read_masking,
 	output:
-		kraken = join(dirs.OUT, '2_kraken2', 'raw_kraken', '{sample}', 'kraken.tsv'),
+		kraken = join(dirs.OUT,'2_kraken2', 'raw_kraken', '{sample}', 'kraken.tsv'),
 		kreport = join(dirs.OUT,'2_kraken2', 'raw_kraken', '{sample}', 'kreport.tsv')
 	log:
 		join(dirs.LOG, 'kraken2', '{sample}.out'),
@@ -232,6 +164,7 @@ rule bracken:
 	conda:
 		join(config['env_yamls'], 'bracken.yaml'),
 	params:
+		kraken_success_file = join(dirs.OUT,'2_kraken2', 'raw_kracken', '{sample}', 'kreport_classes.tsv'),
 		out_dir = join(dirs.OUT,'2_kraken2', 'raw_bracken', '{sample}'),
 		rank = lambda wildcards: '{}'.format(wildcards.rank)[:1].capitalize(),
 		read_len = config['read_len'],
@@ -239,62 +172,34 @@ rule bracken:
 	shell:
 		"""
 		mkdir -p {params.out_dir}
-		bracken -r {params.read_len} -d {params.database}  -l {params.rank} -i {input} -o {output} > {log} 2>&1
+		# bracken -r {params.read_len} -d {params.database}  -l {params.rank} -i {input} -o {output} > {log} 2>&1
+		[ -f {params.kraken_success_file} ] && bracken -r {params.read_len} -d {params.database}  -l {params.rank} -i {input} -o {output} > {log} 2>&1 || touch {output}
 		"""
-# [ -f {params.kraken_success_file} ] && bracken -r {params.read_len} -d {params.database}  -l {params.rank} -i {input} -o {output} > {log} 2>&1 || touch {output}
 
-
-rule standardize_bracken:
+rule merge_bracken_outputs:
 	input:
-		join(dirs.OUT, '2_kraken2', 'raw_bracken', '{sample}', '{rank}.tsv'),
-	output: 
-		join(dirs.OUT, '2_kraken2', 'standardized', '{sample}_{rank}.csv'),
-	params:
-		out_dir = join(dirs.OUT, '2_kraken2', 'standardized'),
-		min_abd = config['min_rel_abund'],		
-	run:
-		if not exists(str(params.out_dir)):
-			os.makedirs(str(params.out_dir))
-		standardize_bracken(str(input), str(params.out_dir), float(params.min_abd))
-
-
-rule merge_bracken:
-	input:
-		lambda wildcards: expand(join(dirs.OUT, '2_kraken2', 'standardized', '{sample}_{rank}.csv'), sample = SAMPLES, rank = wildcards.rank),
-	output: 
-		join(dirs.OUT, 'final_reports', 'kraken_bracken_{rank}.csv'),
-	params:
-		out_dir = join(dirs.OUT, 'final_reports'),
-	run:
-		concat_tbls(input, str(output))
-
-
-rule extract_unclassified_names:
-	input: 
-		join(dirs.OUT, '2_kraken2', 'raw_kraken', '{sample}', 'kraken.tsv'),
+		lambda wildcards: expand(join(dirs.OUT, '2_kraken2', \
+			'raw_bracken','{sample}', '{rank}.tsv'), \
+			sample = SAMPLES, rank = wildcards.rank),
 	output:
-		join(dirs.OUT, '2_kraken2', 'raw_kraken', '{sample}', 'unclassified.txt'),
-	run:
-		extract_unclassified_names(str(input), str(output))
-
-
-rule extract_unclassified_kraken:
-	input:
-		fq = join(dirs.TMP,'{sample}_{dir}.fastq.gz'),
-		unc = join(dirs.OUT, '2_kraken2', 'raw_kraken', '{sample}', 'unclassified.txt'),
-	output: 
-		join(dirs.OUT, 'final_reports', 'unclassified', 'kraken_bracken', '{sample}_{dir}.fastq.gz'),
-	resources:
-		mem_mb = config['kraken2_mem_mb'],
+		join(dirs.OUT, '2_kraken2', 'merged','bracken_{rank}.tsv')
+	conda:
+		join(config['env_yamls'], 'bracken.yaml'),
+	params:
+		out_dir = join(dirs.OUT, '2_kraken2', 'merged'),
+		ext_script = join(dirs_scr, 'combine_bracken_outputs.py'),
+		names = lambda wildcards: ','.join(expand('{sample}', \
+			sample = SAMPLES)),
 	shell:
 		"""
-		seqtk subseq {input.fq} {input.unc} | gzip > {output}
+		mkdir -p {params.out_dir}
+		python {params.ext_script} --files {input} -o {output} --names {params.names}
 		"""
 
 
 rule make_xtree_input:
 	input:
-		lambda wildcards: expand(join(dirs.OUT,'1_metaphlan','{sample}_{dir}.fastq'), sample = wildcards.sample, dir = FQ_DIRS),
+		lambda wildcards: expand(join(dirs.OUT,'1_metaphlan','{sample}_{dir}.fastq'), sample = wildcards.sample, dir = ['1', '2']),
 	output:
 		join(dirs.OUT, '3_xtree', '{sample}.fastq'),
 	threads: 
@@ -309,6 +214,7 @@ rule make_xtree_input:
 
 rule xtree:
 	input:
+		join(dirs.OUT, '3_xtree', '{xtree_group}'),
 		fq = join(dirs.OUT, '3_xtree', '{sample}.fastq'),
 	output:
 		ref = join(dirs.OUT, '3_xtree', '{xtree_group}','{sample}.ref'),
@@ -323,68 +229,49 @@ rule xtree:
 		out_dir = join(dirs.OUT, '3_xtree', '{xtree_group}'),
 		ext_script = join(dirs_scr, 'run_xtree.sh'),
 		xtree_exec = config['xtree_executable'],
-		db = lambda wildcards: config['{}_database'.format(wildcards.xtree_group)],
+		db = lambda wildcards: config['xtree_{}_database'.format(wildcards.xtree_group)],
 		prefix = join(dirs.OUT, '3_xtree', '{xtree_group}','{sample}'),
 	shell:
 		"""
-		mkdir -p {params.out_dir}
-		{params.xtree_exec} --seqs {input.fq} --threads {threads} --db {params.db} --ref-out {output.ref} --cov-out {output.cov} --redistribute > {log} 2>&1
+		cd {params.out_dir}
+		{params.ext_script} {params.xtree_exec} {threads} {input.fq} {params.db} {params.prefix} > {log} 2>&1
 		"""	
-# {params.ext_script} {params.xtree_exec} {threads} {input.fq} {params.db} {params.prefix} > {log} 2>&1
+# {params.xtree_exec} --seqs {input.fq} --threads {threads} --db {params.db} --ref-out {output.ref} --cov-out {output.cov} --redistribute > {log} 2>&1
 
 
 rule merge_xtree_outputs:
 	input:
 		lambda wildcards: expand(join(dirs.OUT, '3_xtree', '{xtree_group}', '{sample}.cov'), xtree_group = wildcards.xtree_group, sample = SAMPLES),
 	output:
-		join(dirs.OUT, '3_xtree', 'merged', '{xtree_group}_ra.tsv'),
+		expand(join(dirs.OUT, '3_xtree', 'merged', 'xtree_{{xtree_group}}_{out_type}.tsv'), out_type = ['counts', 'counts_raw', 'ra', 'ra_raw', 'coverages', 'unique_coverages'])
 	params:
 		ext_script = join(dirs_scr, 'post_process_xtree.R'),
 		indir = join(dirs.OUT, '3_xtree', '{xtree_group}'),
 		xtree_group = '{xtree_group}',
 		out_dir = join(dirs.OUT,'3_xtree', 'merged'),
-		thresh = config['min_rel_abund'],
+		thresh = config['thresh'],
 		hthresh = config['hthresh'],
 		uthresh = config['uthresh'],
 		mappings = join(dirs_ext, 'xtree_all_db_mapping'),
 	shell: 
 		"""
+		mkdir -p {params.out_dir}
 		Rscript {params.ext_script} {params.indir} {params.thresh} {params.hthresh} {params.uthresh} {params.out_dir} {params.xtree_group} {params.mappings}
 		"""
-
-
-rule standardize_xtree:
-	input:
-		join(dirs.OUT, '3_xtree', 'merged', 'bacterial_archaeal_ra.tsv'),
-	output:
-		join(dirs.OUT,'final_reports','xtree_species.csv'),
-		join(dirs.OUT,'final_reports','xtree_genus.csv'),
-		join(dirs.OUT,'final_reports','xtree_family.csv'),
-		join(dirs.OUT,'final_reports','xtree_order.csv'),
-		join(dirs.OUT,'final_reports','xtree_class.csv'),
-		join(dirs.OUT,'final_reports','xtree_phylum.csv'),
-		# *[join(dirs.OUT, 'final_reports', 'xtree_{rank}.csv') for rank in RANKS],
-		# lambda wildcards: expand(join(dirs.OUT, 'final_reports', 'xtree_{rank}.csv'), rank = RANKS),
-	params:
-		out_dir = join(dirs.OUT, 'final_reports'),
-		ncbi_taxid = config['ncbi_tax_names'],
-		uthresh = config['uthresh'],
-	run:
-		standardize_xtree(str(input), str(params.out_dir), str(params.ncbi_taxid), float(params.uthresh))
 
 
 rule make_config:
 	input:
 		workflow_mode,
 	output:
-		join(dirs.OUT, 'final_reports', 'complete.txt'),
+		join(dirs.OUT, 'final_reports', 'complete.txt')
 	params:
 		out_dir = join(dirs.OUT, 'final_reports'),
 	run:
-		for i in input: # Copy incompatible XTree reports from non-bacterial/archaeal superkingdoms to the output directory
-			if any(True for k in ['protozoa_fungi', 'viral'] if k in i):
-				shutil.copy(str(i), join(str(params.out_dir), 'xtree_' + basename(i)))
-		open(str(output), 'w').close()
+		out = []
+		for i in input:
+			shutil.copy(str(i), join(params.out_dir, basename(i)))
+		open(str(output), 'a').close()
 
 
 
