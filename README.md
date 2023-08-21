@@ -1,6 +1,6 @@
 # CAMP Short-Read Taxonomy
 
-[![Documentation Status](https://img.shields.io/readthedocs/camp_short-read-taxonomy)](https://camp-documentation.readthedocs.io/en/latest/short-read-taxonomy.html) ![Version](https://img.shields.io/badge/version-0.7.0-brightgreen)
+[![Documentation Status](https://img.shields.io/readthedocs/camp_short-read-taxonomy)](https://camp-documentation.readthedocs.io/en/latest/short-read-taxonomy.html) ![Version](https://img.shields.io/badge/version-0.7.1-brightgreen)
 
 ## Overview
 
