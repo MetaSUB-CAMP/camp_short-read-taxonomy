@@ -13,6 +13,11 @@ xtree: 'bacterial_archaeal,protozoa_fungi,viral'
 min_rel_abund: 0.01
 
 
+# --- masking --- #
+
+bbmask_script: ''
+
+
 # --- metaphlan --- #
 
 metaphlan_database: ''

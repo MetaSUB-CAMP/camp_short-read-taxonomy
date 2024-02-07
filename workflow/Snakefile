@@ -76,20 +76,19 @@ rule all:
 
 rule mask_reads:
 	input:
-		fwd = join(dirs.TMP,'{sample}_1.fastq.gz'),
-		rev = join(dirs.TMP,'{sample}_2.fastq.gz'),
+		join(dirs.TMP,'{sample}_{dir}.fastq.gz'),
 	output:
-		fwd = join(dirs.OUT, '0_masked_fastqs', '{sample}_1.masked.fastq.gz'),
-		rev = join(dirs.OUT, '0_masked_fastqs', '{sample}_2.masked.fastq.gz'),
+		join(dirs.OUT, '0_masked_fastqs', '{sample}_{dir}.masked.fastq.gz'),
 	log:
-		join(dirs.LOG, 'masking', '{sample}.out'),
+		join(dirs.LOG, 'masking', '{sample}_{dir}.out'),
 	threads:
 		config['mask_reads_threads'],
+	params:
+		bbmask_scr = config['bbmask_script'],
 	shell:
 		"""
-		bbmask.sh in={input.fwd} out={output.fwd} overwrite=t threads={threads} > {log} 2>&1
-		bbmask.sh in={input.rev} out={output.rev} overwrite=t threads={threads} > {log} 2>&1
-		"""	  
+		{params.bbmask_scr} in={input} out={output} overwrite=t threads={threads} > {log} 2>&1
+		"""
 
 
 rule scrub_fastq_captions:
@@ -185,6 +184,8 @@ rule extract_unclassified_metaphlan:
 		fwd = join(dirs.OUT,'final_reports','unclassified', 'metaphlan', '{sample}_1.fastq.gz'),
 		rev = join(dirs.OUT,'final_reports','unclassified', 'metaphlan', '{sample}_2.fastq.gz'),
 		unp = join(dirs.OUT,'final_reports','unclassified', 'metaphlan', '{sample}_unp.fastq.gz'),
+	conda:
+		join(config['env_yamls'], 'metaphlan.yaml'),
 	threads:
 		config['metaphlan_threads'],
 	resources:
