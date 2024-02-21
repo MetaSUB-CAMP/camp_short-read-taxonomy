@@ -1,6 +1,6 @@
 # Short-Read Taxonomy
 
-[![Documentation Status](https://img.shields.io/badge/docs-passing-brightgreen.svg)](https://camp-documentation.readthedocs.io/en/latest/shortreadtax/index.html) ![Version](https://img.shields.io/badge/version-0.7.5-brightgreen)
+[![Documentation Status](https://img.shields.io/badge/docs-passing-brightgreen.svg)](https://camp-documentation.readthedocs.io/en/latest/shortreadtax/index.html) ![Version](https://img.shields.io/badge/version-0.7.6-brightgreen)
 
 <!-- [![Documentation Status](https://img.shields.io/readthedocs/camp_short-read-taxonomy)](https://camp-documentation.readthedocs.io/en/latest/short-read-taxonomy.html) -->
 

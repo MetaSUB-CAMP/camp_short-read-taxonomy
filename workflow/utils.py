@@ -198,7 +198,7 @@ def standardize_xtree(fi, out_dir, ncbi_taxid, uthresh):
     raw_df = pd.read_csv(fi, sep = '\t', header = 0, index_col = None)
     raw_df.reset_index(inplace = True)
     basic_cols = ['classifier', 'clade', 'tax_id']
-    sample_names = [s.replace('X', '') for s in raw_df.columns[1:]]
+    sample_names = list(raw_df.columns[1:])
     column_names = basic_cols + sample_names # 1 | all)
     for r, rank in { 's' : 'species', 'g' : 'genus', 'f' : 'family', 'o' : 'order', 'c' : 'class', 'p' : 'phylum'}.items():
         out_lst = list(raw_df.apply(lambda row : reformat_row_xtree(row, n2i_dct, r), axis = 1))
