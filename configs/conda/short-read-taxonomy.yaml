@@ -2,7 +2,6 @@ name: short-read-taxonomy
 channels:
   - bioconda
   - conda-forge
-  - defaults
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=2_gnu
@@ -255,4 +254,3 @@ dependencies:
   - zipp=3.16.2=pyhd8ed1ab_0
   - zlib=1.2.13=hd590300_5
   - zstd=1.5.5=hfc55251_0
-prefix: /home/fs01/lam4003/bin/miniconda3/envs/short-read-taxonomy
